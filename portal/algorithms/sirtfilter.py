@@ -51,7 +51,7 @@
 
 from __future__ import division
 import numpy as np
-from portal.operators import tomography
+from portal.operators.tomography import AstraToolbox
 
 
 
@@ -174,7 +174,8 @@ class SirtFilter:
 
 
     def reconst(self, sino):
-        return _convolve(sino, self.thefilter)
+        s = _convolve(sino, self.thefilter)
+        return self.AST.backproj(s, filt=False)
 
 
 

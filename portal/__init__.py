@@ -27,4 +27,35 @@
 #
 
 
-from . import CP, convo_operators, tomo_operators, phantoms, utils, image_operators
+import os
+import sys
+
+def _isImportedFromSourceDirectory():
+    """Returns True if this module is imported from its source directory."""
+
+    # sys.path[0]: script directory or '' for interactive interpreter
+    path = os.path.abspath(sys.path[0] or os.getcwd())
+    return os.path.abspath(__file__).startswith(path)
+
+
+if _isImportedFromSourceDirectory():
+    raise ImportError('Cannot be imported from source directory.')
+
+
+from portal.algorithms.chambollepock import *
+from portal.algorithms.conjgrad import *
+from portal.algorithms.sirtfilter import *
+
+from portal.operators.convolution import *
+from portal.operators.tomography import *
+from portal.operators.image import *
+from portal.operators.misc import *
+
+from portal.preprocess.rings import *
+from portal.preprocess.sinogram import *
+
+from portal.utils.io import *
+from portal.utils.misc import *
+
+
+del _isImportedFromSourceDirectory  # Clean-up module namespace
