@@ -26,4 +26,9 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# Init - operators
 
+import convolution
+import image
+import tomography
+import misc

@@ -31,9 +31,10 @@
 
 from __future__ import division
 import numpy as np
-from operators import power_method
-from image import grad_tv_smoothed, tv_smoothed, norm2sq, dot
+from portal.operators.misc import power_method
+from portal.operators.image import grad_tv_smoothed, tv_smoothed, norm2sq, dot
 
+__all__ = ['conjugate_gradient_TV']
 
 def conjugate_gradient_TV(K, Kadj, data, Lambda, mu=1e-4, n_it=300):
     '''

@@ -32,6 +32,8 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
+__all__ = ['gaussian1D', 'generate_coords', 'my_imshow', 'phantom_mask', 'phantom']
+
 
 def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
     if isinstance(img_list, np.ndarray):

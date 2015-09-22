@@ -33,6 +33,9 @@
 from __future__ import division
 import numpy as np
 
+__all__ = ['gradient', 'div', 'tv_smoothed', 'grad_tv_smoothed', 'proj_l2', 'norm2sq', 'norm1', 'dot', 'entropy', 'KL']
+
+
 def gradient(img):
     '''
     Compute the gradient of an image as a numpy array

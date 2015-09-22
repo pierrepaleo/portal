@@ -33,6 +33,7 @@ from __future__ import division
 import numpy as np
 from scipy.ndimage import filters
 
+__all__ = ['ConvolutionOperator']
 
 class ConvolutionOperator:
     def __init__(self, kernel, initfrom=None):

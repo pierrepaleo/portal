@@ -30,18 +30,21 @@
 import os
 import sys
 
+
 def _isImportedFromSourceDirectory():
     """Returns True if this module is imported from its source directory."""
 
     # sys.path[0]: script directory or '' for interactive interpreter
-    path = os.path.abspath(sys.path[0] or os.getcwd())
-    return os.path.abspath(__file__).startswith(path)
+    path = os.path.abspath(sys.path[0])
+    # filePath == __file__ if __file__ is absolute (See os.path.join).
+    filePath = os.path.join(path, __file__)
+    return os.path.commonprefix((path, filePath)) == path
 
 
 if _isImportedFromSourceDirectory():
     raise ImportError('Cannot be imported from source directory.')
 
-
+'''
 from portal.algorithms.chambollepock import *
 from portal.algorithms.conjgrad import *
 from portal.algorithms.sirtfilter import *
@@ -56,6 +59,30 @@ from portal.preprocess.sinogram import *
 
 from portal.utils.io import *
 from portal.utils.misc import *
+'''
+
+
+from portal import algorithms
+from portal import operators
+from portal import preprocess
+from portal import utils
+
+#~ from portal.algorithms.chambollepock import chambolle_pock
+#~ from portal.algorithms.conjgrad import conjugate_gradient_TV
+#~ from portal.algorithms.sirtfilter import SirtFilter
+
+#~ from portal.operators.convolution import ConvolutionOperator
+#~ from portal.operators.tomography import AstraToolbox
+#~ from portal.operators import image
+#~ from portal.operators import misc
+
+#~ from portal.preprocess import rings
+#~ from portal.preprocess import sinogram
+
+#~ from portal.utils import io
+#~ from portal.utils import misc
+
+
 
 
 del _isImportedFromSourceDirectory  # Clean-up module namespace

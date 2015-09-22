@@ -29,7 +29,7 @@
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 
-
+__all__ = ['center_sino', 'straighten_sino']
 
 # ------------------------------------------------------------------------------
 # ------------Cupping reduction : "sinogram straightening" ---------------------

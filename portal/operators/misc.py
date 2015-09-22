@@ -32,8 +32,9 @@
 from __future__ import division
 import numpy as np
 from math import sqrt
+from portal.operators.image import norm2sq
 
-
+__all__ = ['power_method', 'check_adjoint']
 
 def power_method(K, Kadj, data, n_it=10):
     '''

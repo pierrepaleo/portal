@@ -35,6 +35,7 @@ import scipy.io
 import h5py
 from PyMca.EdfFile import EdfFile
 
+__all__ = ['edf_read', 'edf_write', 'h5_read', 'h5_write', 'loadmat']
 
 def edf_read(fname):
         '''

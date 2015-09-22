@@ -53,7 +53,7 @@ from __future__ import division
 import numpy as np
 from portal.operators.tomography import AstraToolbox
 
-
+__all__ = ['SirtFilter']
 
 class SirtFilter:
     def __init__(self, n_pixels, angles, n_it, savedir=None):

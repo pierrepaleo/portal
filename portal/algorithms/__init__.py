@@ -27,3 +27,16 @@
 #
 
 
+# Init - algorithms
+
+'''
+import chambollepock
+import conjgrad
+import sirtfilter
+'''
+
+from .chambollepock import chambolle_pock
+from .conjgrad import conjugate_gradient_TV
+from .sirtfilter import SirtFilter
+
+#~ __all__ = ['chambolle_pock', 'conjugate_gradient_TV', 'SirtFilter']

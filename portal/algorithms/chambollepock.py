@@ -31,8 +31,12 @@
 
 from __future__ import division
 import numpy as np
-from operators import power_method
-from image import gradient, div, norm1, norm2sq
+from portal.operators.misc import power_method
+from portal.operators.image import gradient, div, norm1, norm2sq, proj_l2
+
+
+__all__ = ['chambolle_pock']
+
 
 def chambolle_pock(K, Kadj, data, Lambda, L=None,  n_it=100, return_energy=True):
     '''
@@ -48,6 +52,11 @@ def chambolle_pock(K, Kadj, data, Lambda, L=None,  n_it=100, return_energy=True)
     return_energy: if True, an array containing the values of the objective function will be returned
     '''
 
+    if L is None:
+        print("Warn: chambolle_pock(): Lipschitz constant not provided, computing it with 20 iterations")
+        L = power_method(K, Kadj, data, 20) * 1.2
+        print("L = %e" % L)
+
     sigma = 1.0/L
     tau = 1.0/L
 
@@ -56,12 +65,6 @@ def chambolle_pock(K, Kadj, data, Lambda, L=None,  n_it=100, return_energy=True)
     q = 0*data
     x_tilde = 0*x
     theta = 1.0
-
-    if L is None:
-        print("Warn: chambolle_pock(): Lipschitz constant not provided, computing it with 20 iterations")
-        L = power_method(K, Kadj, data, 20) * 1.2
-        print("L = %e" % L)
-
 
     if return_energy: en = np.zeros(n_it)
     for k in range(0, n_it):
@@ -84,6 +87,6 @@ def chambolle_pock(K, Kadj, data, Lambda, L=None,  n_it=100, return_energy=True)
     else: return x
 
 
-
+#~ del power_method, gradient, div, norm1, norm2sq, division, np
 
 
