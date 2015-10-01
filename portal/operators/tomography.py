@@ -57,6 +57,7 @@ class AstraToolbox:
             n_x, n_y = n_pixels
         if isinstance(n_angles, int):
             angles = np.linspace(0, np.pi, n_angles, False)
+        else: angles = n_angles
 
         self.vol_geom = astra.create_vol_geom(n_x, n_y)
         self.proj_geom = astra.create_proj_geom('parallel', 1.0, n_pixels, angles)

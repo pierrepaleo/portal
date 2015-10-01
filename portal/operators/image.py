@@ -33,7 +33,7 @@
 from __future__ import division
 import numpy as np
 
-__all__ = ['gradient', 'div', 'tv_smoothed', 'grad_tv_smoothed', 'proj_l2', 'norm2sq', 'norm1', 'dot', 'entropy', 'KL']
+__all__ = ['gradient', 'div', 'gradient_axis', 'div_axis', 'tv_smoothed', 'grad_tv_smoothed', 'proj_l2', 'norm2sq', 'norm1', 'dot', 'entropy', 'KL']
 
 
 def gradient(img):
@@ -65,6 +65,46 @@ def div(grad):
         this_res[-1] -= this_grad[-2]
     return res
 
+
+def gradient_axis(x, axis=-1):
+    '''
+    Compute the gradient (keeping dimensions) along one dimension only.
+    By default, the axis is -1 (diff along columns).
+    '''
+    t1 = np.empty_like(x)
+    t2 = np.empty_like(x)
+    if axis != 0:
+        t1[:, :-1] = x[:, 1:]
+        t1[:, -1] = 0
+        t2[:, :-1] = x[:, :-1]
+        t2[:, -1] = 0
+    else:
+        t1[:-1, :] = x[1:, :]
+        t1[-1, :] = 0
+        t2[:-1, :] = x[:-1, :]
+        t2[-1, :] = 0
+    return t1-t2
+
+
+
+def div_axis(x, axis=-1):
+    '''
+    Compute the opposite of divergence (keeping dimensions), adjoint of the gradient, along one dimension only.
+    By default, the axis is -1 (div along columns).
+    '''
+    t1 = np.empty_like(x)
+    t2 = np.empty_like(x)
+    if axis != 0:
+        t1[:, :-1] = -x[:, :-1]
+        t1[:, -1] = 0
+        t2[:, 0] = 0
+        t2[:, 1:] = x[:, :-1]
+    else:
+        t1[:-1,: ] = -x[:-1, :]
+        t1[-1, :] = 0
+        t2[0, :] = 0
+        t2[1:, :] = x[:-1, :]
+    return t1 + t2
 
 def psi(x, mu):
     '''

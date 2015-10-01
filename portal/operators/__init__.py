@@ -31,4 +31,5 @@
 import convolution
 import image
 import tomography
+import wavelets
 import misc

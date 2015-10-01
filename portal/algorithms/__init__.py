@@ -38,5 +38,6 @@ import sirtfilter
 from .chambollepock import chambolle_pock
 from .conjgrad import conjugate_gradient_TV
 from .sirtfilter import SirtFilter
+from .fista import *
 
 #~ __all__ = ['chambolle_pock', 'conjugate_gradient_TV', 'SirtFilter']

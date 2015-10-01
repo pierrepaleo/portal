@@ -63,20 +63,150 @@ def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
 
 
 
-def generate_coords(img,center=None):
-    if center is None: center = img.shape[0]/2, img.shape[1]/2
-    R, C = np.mgrid[0:img.shape[0],0:img.shape[1]]
-    R -= center[0]; C -= center[1]
+#~ def generate_coords(img,center=None):
+    #~ if center is None: center = img.shape[0]/2, img.shape[1]/2
+    #~ R, C = np.mgrid[0:img.shape[0],0:img.shape[1]]
+    #~ R -= center[0]; C -= center[1]
+    #~ return R, C
+
+def generate_coords(img_shp, center=None):
+    """
+    Credits : E. Gouillart
+    """
+    l_r, l_c = float(img_shp[0]), float(img_shp[1])
+    R, C = np.mgrid[:l_r, :l_c]
+    if center is None:
+        center0, center1 = l_r / 2., l_c / 2.
+    else:
+        center0, center1 = center
+    R += 0.5 - center0
+    C += 0.5 - center1
     return R, C
+
+
+
+
+def from_gradient_to_image(gr, f00=0):
+    '''
+    Reconstruct an image from its gradient.
+
+    gr : gradient of the image : (2, N, N) numpy array
+    f00 : value of f(0, 0)
+    '''
+
+    # Reconstruct the first column from f(0, 0)
+    col0 = np.cumsum((gr[0])[:,0])
+    col0[1:] = col0[:-1]
+    col0 = col0 + f00
+
+    # Reconstruct the image from the first column
+    res = np.empty_like(gr[0])
+    res[:, 0] = col0
+    res[:, 1:] = gr[1][:, :-1]
+    return np.cumsum(res, axis=1)
+
+
+def from_gradient_comp_to_image(gr, boundary=None, axis=1, renorm=False):
+    '''
+    Reconstruct an image from only one component of its gradient.
+    Since only one component is available, a whole boundary has to be provided,
+    either the first line (for comonent 0)  or column (for component 1) of the image.
+
+    gr : one component of the gradient : (N, N) numpy ndarray
+    boundary : prior knowledge on the image : first line or first column.
+    axis : component (0: lines, 1: columns)
+    '''
+
+    if len(gr.shape) > 2:
+        raise ValueError('It seems that more of one gradient component were provided. If so, please use from_gradient_to_image()')
+
+    if boundary is None:
+        print("Warning : boundary condition not provided. Solution might be incoherent along axis %d" % (1-axis))
+        res = np.cumsum(gr, axis=axis)
+        #
+        if renorm is True:
+            mn = np.mean(res, axis=1)
+            res2 = np.copy(res)
+            for i in range(res.shape[0]):
+                res2[i, :] = res[i, :] - mn[i]
+            res = res2
+        #
+        return res
+
+    else:
+        if len(boundary.shape) > 1:
+            raise ValueError('Please provide a one-dimensional boundary (first line or first column)')
+        if boundary.shape[0] != gr.shape[axis]:
+            raise ValueError('The boundary length does not match the length of dimension %d' % axis)
+
+        # TODO : extend for axis 0 (transpose)
+        res = np.empty_like(gr)
+        res[:, 0] = boundary
+        res[:, 1:] = gr[:, :-1]
+        return np.cumsum(res, axis=1)
+
+
+def _generate_center_coordinates(l_x):
+    """
+    Compute the coordinates of pixels centers for an image of
+    linear size l_x
+    """
+    l_x = float(l_x)
+    X, Y = np.mgrid[:l_x, :l_x]
+    center = l_x / 2.
+    X += 0.5 - center
+    Y += 0.5 - center
+    return X, Y
+
+
+
+def fit_fourier(s_comp, c_comp):
+
+    Nr, Nc = s_comp.shape
+    S = np.fft.fftshift(np.fft.fft2(s_comp))
+    C = np.fft.fftshift(np.fft.fft2(c_comp))
+    #~ kr, kc = portal.utils.misc.generate_coords(s_comp)
+    kr, kc = _generate_center_coordinates(Nr)
+    renorm = 1.0/(kr**2 + kc**2)
+
+    renorm[np.isinf(renorm)] = 1.0 # /!\
+
+    F_real = kr * S.imag + kc * C.imag
+    F_real *= renorm
+    F_imag = -kr * S.real - kc * C.real
+    F_imag *= renorm
+
+    return np.fft.ifft2(np.fft.ifftshift((F_real + 1j*F_imag))).real
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def phantom_mask(img, radius=None):
     if radius is None: radius = img.shape[0]//2-10
-    R, C = generate_coords(img)
+    R, C = generate_coords(img.shape)
     M = R**2+C**2
     res = np.zeros_like(img)
     res[M<radius**2] = img[M<radius**2]
     return res
 
+def clip_circle(img, center=None, radius=None):
+    R, C = generate_coords(img.shape, center)
+    M = R**2+C**2
+    res = np.zeros_like(img)
+    res[M<radius**2] = img[M<radius**2]
+    return res
 
 
 def gaussian1D(sigma):
@@ -86,6 +216,7 @@ def gaussian1D(sigma):
     g = np.exp(-(t / sigma) ** 2 / 2.0).astype('f')
     g /= g.sum(dtype='f')
     return g
+
 
 
 ################################################################################

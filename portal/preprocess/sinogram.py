@@ -28,6 +28,8 @@
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
+import numpy as np
+from portal.utils.misc import generate_coords
 
 __all__ = ['center_sino', 'straighten_sino']
 
@@ -62,7 +64,90 @@ def straighten_sino(sino):
 # ------------ Determine the center of rotation --------------------------------
 # ------------------------------------------------------------------------------
 
-#TODO : implement nhgia's double-wedge technique
+def _gaussian_kernel(ksize, sigma):
+    '''
+    Creates a gaussian function of length "ksize" with std "sigma"
+    '''
+    x = np.arange(ksize) - (ksize - 1.0) / 2.0
+    gaussian = np.exp(-(x / sigma) ** 2 / 2.0).astype(np.float32)
+    #gaussian /= gaussian.sum(dtype=np.float32)
+    return gaussian
+
+
+# TODO : test on other data
+def calc_center_shifts(sino, smin, smax, sstep=1):
+    '''
+    Determines the center of rotation according to
+        Vo NT Et Al, "Reliable method for calculating the center of rotation in parallel-beam tomography", Opt Express, 2014
+
+    The idea is the following :
+        - create a reflected version of the original sinogram
+        - shift this mirrored sinogram and append it to the original one
+        - take the Fourier Transform and see what happens in the vertical line (u = 0)
+        - repeat for different shifts
+
+    sino : sinogram as a numpy array
+    smin: minimum shift of lower sinogram (can be negative)
+    smax: maximum shift of lower sinogram
+    sstep: shift step (can be less than 1 for subpixel precision)
+    '''
+
+    if sstep < 1: raise NotImplementedError('subpixel precision is not implemented yet...')
+    sino_flip = sino[::-1, :]
+    n_angles, n_px = sino.shape
+    radius = n_px/2 #small radius => big complement of double-wedge
+    s_vec = np.arange(smin, smax+1, sstep)*1.0
+    Q_vec = np.zeros_like(s_vec)
+    for i,s in enumerate(s_vec):
+        #~ if _VERBOSE: print("[calc_center_shifts] Case %d/%d" % (i+1,s_vec.shape[0]))
+        # Create the artificial 360° sinogram (cropped)
+        sino2 = np.zeros((2*n_angles, n_px - abs(s)))
+        if s > 0:
+            sino2[:n_angles, :] = sino[:, s:]
+            sino2[n_angles:, :] = sino_flip[:, :-s]
+        elif s < 0:
+            sino2[:n_angles, :] = sino[:, :s]
+            sino2[n_angles:, :] = sino_flip[:, -s:]
+        else:
+            sino2[:n_angles, :] = sino
+            sino2[n_angles:, :] = sino_flip
+
+        # Create the mask "outside double wedge" (see [1])
+        R, C = generate_coords(sino2.shape)
+        mask = 1 - (np.abs(R) <= np.abs(C)*radius)
+
+        # Take FT of the sinogram and compute the Fourier metric
+        sino_f = np.abs(np.fft.fftshift(np.fft.fft2(sino2)))
+        #~ sino_f = np.log(sino_f)
+        Q_vec[i] = np.sum(sino_f * mask)/np.sum(mask)
+
+    s0 = s_vec[Q_vec.argmin()]
+    return n_px/2 + s0
+
+
+
+
+def calc_center_centroids(sino):
+    '''
+    Determines the center of rotation of a sinogram by computing the center of gravity of each row.
+    The array of centers of gravity is fitted to a sine function.
+    The axis of symmetry is the estimated center of rotation.
+    '''
+
+    n_angles, n_px = sino.shape
+    # Compute the center of gravity for each row
+    i = np.arange(n_px)
+    centroids = np.sum(sino*i, axis=1)/np.sum(sino, axis=1) # sino*i : each row is mult. by "i"
+    # Fit this array to a sine function.
+    # This is done by taking the Fourier Transform and keeping the first two components (mean value and fund. frequency)
+    centroids_f = np.fft.fft(centroids)
+    #~ sigma = 9.0 # blur factor
+    #~ Filter = np.fft.ifftshift(_gaussian_kernel(n_angles, sigma))
+    Filter = np.zeros(n_angles); Filter[0:2] = 1; Filter[-2:] = 1
+    centroids_filtered = np.fft.ifft(centroids_f * Filter).real
+
+    return centroids_filtered.min()
+
 
 
 

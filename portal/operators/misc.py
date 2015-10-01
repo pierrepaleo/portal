@@ -32,7 +32,7 @@
 from __future__ import division
 import numpy as np
 from math import sqrt
-from portal.operators.image import norm2sq
+from portal.operators.image import norm2sq, dot
 
 __all__ = ['power_method', 'check_adjoint']
 
@@ -65,6 +65,7 @@ def check_adjoint(K, Kadj, K_input_shape, Kadj_input_shape, tol=1e-7):
     y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1])
 
     err = abs(dot(K(x), y) - dot(x, Kadj(y)))
+    print(err)
     return False if err > tol else True
 
 
