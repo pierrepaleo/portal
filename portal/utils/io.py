@@ -52,7 +52,7 @@ def edf_write(data, fname, info={}):
         '''
         Save a numpy array into a EDF file
         '''
-        edfw = EdfFile(fname, access='a+') # Append ...
+        edfw = EdfFile(fname, access='w+') # Overwrite !
         edfw.WriteImage(info, data)
 
 

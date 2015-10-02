@@ -70,6 +70,16 @@ def _norm1(mat):
     return np.sum(np.abs(mat))
 
 
+def soft_threshold_coeffs(w, beta): # in-place, no return !
+    #~ self.a = _soft_thresh(w.a, beta) # FIXME : do I have to also ST the app coeffs ?
+    L = len(w.h)
+    for k in range(0, L):
+        w.h[k] = _soft_thresh(w.h[k], beta)
+        w.v[k] = _soft_thresh(w.v[k], beta)
+        w.d[k] = _soft_thresh(w.d[k], beta)
+
+
+
 
 class WaveletCoeffs():
     '''
@@ -112,7 +122,7 @@ class WaveletCoeffs():
                 self.v.append(np.copy(data.v[k]))
                 self.d.append(np.copy(data.d[k]))
 
-        # Wavelet decomposition from an image
+       # Wavelet decomposition from an image
         else:
             if levels is None: self.levels = _ilog2(max(data.shape))-1
             else: self.levels = int(levels)
@@ -123,6 +133,7 @@ class WaveletCoeffs():
                 self.shifts = np.random.randint(data.shape[0]-1, size=2)+1
             if wname is None: self.wname = 'haar'
             else: self.wname = wname
+
             # Compute DWT
             data2 = _circular_shift(data, self.shifts[0], self.shifts[1]) if self.do_random_shifts is True else data
             S = pywt.wavedec2(data2, self.wname, mode='per', level=self.levels)
@@ -214,15 +225,15 @@ class WaveletCoeffs():
 
 
 
-    def soft_threshold(self, beta): #inplace
-        ST = lambda x : np.maximum(np.abs(x)-beta, 0)*np.sign(x)
+    def soft_threshold(self, beta): # inplace
+        #~ ST = lambda x : np.maximum(np.abs(x)-beta, 0)*np.sign(x)
         #~ self.a = _soft_thresh(self.a, beta) # FIXME : do I have to also ST the app coeffs ?
         L = len(self.h)
-        #~ beta0 = beta
         for k in range(0, L):
             self.h[k] = _soft_thresh(self.h[k], beta)
             self.v[k] = _soft_thresh(self.v[k], beta)
             self.d[k] = _soft_thresh(self.d[k], beta)
+
 
     def proj_linf(self, beta):
         L = len(self.h)

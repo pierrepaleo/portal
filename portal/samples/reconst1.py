@@ -29,7 +29,6 @@ def write_edf(fname, data):
 if __name__ == '__main__':
 
 
-    # PyHST-like input
     # - The input folder must contain *sinograms* (not projections)
     # - It should contain files in the format "fileprefix_xxxx.edf" (eg. mysample_scan_sino_xxxx.edf)
     # - All sinograms must be of the same size
@@ -37,7 +36,7 @@ if __name__ == '__main__':
     folder = '/home/paleo/Projets/ID16/A11_osmium_tomo11/raw_sino' # must contain sinograms, not projections !
     file_prefix = 'sino_'
     do_straighten_sino = 1 # Straighten sinograms to reduce cupping effect
-    do_destripe_sino = 1 # Correct rings artifacts by pre-processing the sinogram
+    do_destripe_sino = 0 # Correct rings artifacts by pre-processing the sinogram
     destripe_algorithm = 1 # 1 = Münch, 2 = Titarenko
     slice_start = 201
     slice_end =   201
@@ -60,8 +59,8 @@ if __name__ == '__main__':
 
     sino0 = read_edf(fl[slice_start])
     nAng, npix = sino0.shape
-    AST = portal.operators.tomography.AstraToolbox(npix, nAng)
-    PT = lambda y : AST.backproj(y, filt=False)
+    #~ AST = portal.operators.tomography.AstraToolbox(npix, nAng)
+    #~ PT = lambda y : AST.backproj(y, filt=False)
 
     print("Computing the filter...")
     S = portal.algorithms.sirtfilter.SirtFilter(npix, nAng, sirt_iterations, folder_out)
@@ -77,19 +76,18 @@ if __name__ == '__main__':
         #~ sino = (sino-sino.min())/(sino.max()-sino.min()) # Does not work along straighten
         if do_destripe_sino:
             print("De-striping...")
-            if destripe_algorithm == 1: sino = portal.preprocess.rings.munchetal_filter(sino, 5, 1.6) # TODO : these as a parameter
+            if destripe_algorithm == 1: sino = portal.preprocess.rings.munchetal_filter(sino, 5, 3.6) # 1.6 # TODO : these as a parameter
             elif destripe_algorithm == 2: sino = portal.preprocess.rings.remove_stripe_ti(sino)
             else: raise Exception('Unknown de-striping algorithm')
         print("Convolving...")
-        #~ sino_f = _convolve(sino, thefilter)
-        #~ res = PT(sino_f)
         res = S.reconst(sino)
+        #~ res = PT(sino) # For dataset A11, "sirt_filter" works well because plain BP is not bad, but FBP enhances the noise too much => need "filter"
 
         fname_out = os.path.join(folder_out, file_prefix_out) + str("%04d" % i) + ".edf"
         write_edf(fname_out, res)
         print("Wrote %s" % fname_out)
 
-        portal.utils.io.call_imagej(res)
+        #~ portal.utils.io.call_imagej([res, res_fbp])
 
 
 

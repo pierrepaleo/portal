@@ -33,35 +33,35 @@ from portal.operators.image import norm2sq
 
 __all__ = ['fista_l1']
 
-def fista_l1(data, K, Kadj, H, Lambda, Lip=None,  n_it=100, return_energy=True):
+def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, return_energy=True):
     '''
     Beck-Teboulle's forward-backward algorithm to minimize the objective function
-        ||K*x - d||_2^2 + ||H*x||_1
+        ||K*x - d||_2^2 + Lambda*||H*x||_1
     When K and H are linear operators, and H is invertible.
 
     K : forward operator
     Kadj : backward operator
-    H : *invertible* linear operator (eg. sparsifying transform, like Wavelet transform).
-        This operator is a class which must have the following methods:
-        H.forward(x), or H(x)   : compute the coefficients from the image
-        H.soft_threshold()      : in-place soft-thresholding
-        H.inverse()             : inversion, from coefficients to image
-        H.norm1()               : [optionnal] L1 norm of the coefficients
-
     Lambda : weight of the regularization (the higher Lambda, the more sparse is the solution in the H domain)
+    H : *invertible* linear operator (eg. sparsifying transform, like Wavelet transform).
+    Hinv : inverse operator of H
+    soft_thresh : *in-place* function doing the soft thresholding (proximal operator of L1 norm) of the coefficients H(image)
     Lip : largest eigenvalue of Kadj*K
     n_it : number of iterations
     return_energy: if True, an array containing the values of the objective function will be returned
     '''
 
-
-    # Check if the operator H satisfies the requirements
-    if not callable(getattr(H, "inverse", None)): raise ValueError('fista_l1() : the H parameter should have a inverse() callable method')
-    if not callable(getattr(H, "soft_threshold", None)): raise ValueError('fista_l1() : the H parameter should have a soft_threshold() callable method')
-    can_compute_l1 = True if callable(getattr(H, "norm1", None)) else False
+    # Check if H, Hinv and soft_thresh are callable
+    if not callable(H) or not callable(Hinv) or not callable(soft_thresh): raise ValueError('fista_l1() : the H, Hinv and soft_thresh parameters be callable')
+    # Check if H and Hinv are inverse of eachother
     u = np.random.rand(512, 512)
-    if np.max(np.abs(u - H(u).inverse())) > 1e-3: # FIXME: not sure what tolerance I should take
+    Hu = H(u)
+    if np.max(np.abs(u - Hinv(Hu))) > 1e-3: # FIXME: not sure what tolerance I should take
         raise ValueError('fista_l1() : the H operator inverse does not seem reliable')
+    # Check that soft_thresh is an in-place operator
+    thr = soft_thresh(Hu, 1.0)
+    if thr is not None: raise ValueError('fista_l1(): the soft_thresh parameter must be an in-place modification of the coefficients')
+    # Check if the coefficients H(u) have a method "norm1"
+    can_compute_l1 = True if callable(getattr(Hu, "norm1", None)) else False
 
     if Lip is None:
         print("Warn: fista_l1(): Lipschitz constant not provided, computing it with 20 iterations")
@@ -75,15 +75,9 @@ def fista_l1(data, K, Kadj, H, Lambda, Lip=None,  n_it=100, return_energy=True):
         grad_y = Kadj(K(x) - data)
         x_old = x
         w = H(y - (1.0/Lip)*grad_y)
-        w.soft_threshold(Lambda/Lip)
-        x = w.inverse()
-
-        #~ import matplotlib.pyplot as plt
-        #~ plt.figure()
-        #~ plt.imshow(x); plt.colorbar()
-        #~ plt.show()
-
-        y = x + ((k-1.0)/(k+10.1))*(x - x_old)
+        soft_thresh(w, Lambda/Lip)
+        x = Hinv(w)
+        y = x + ((k-1.0)/(k+10.1))*(x - x_old) # TODO : see what would be the best parameter "a"
         # Calculate norms
         if return_energy:
             fidelity = 0.5*norm2sq(K(x)-data)
@@ -92,5 +86,6 @@ def fista_l1(data, K, Kadj, H, Lambda, Lip=None,  n_it=100, return_energy=True):
             en[k] = energy
             if (k%10 == 0): # TODO: more flexible
                 print("[%d] : energy %e \t fidelity %e \t L1 %e" % (k, energy, fidelity, l1))
+        elif (k%10 == 0): print("Iteration %d" % k)
     if return_energy: return en, x
     else: return x

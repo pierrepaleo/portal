@@ -146,6 +146,11 @@ def calc_center_centroids(sino):
     Filter = np.zeros(n_angles); Filter[0:2] = 1; Filter[-2:] = 1
     centroids_filtered = np.fft.ifft(centroids_f * Filter).real
 
+    #~ import matplotlib.pyplot as plt
+    #~ plt.figure()
+    #~ plt.plot(centroids); plt.plot(centroids_filtered)
+    #~ plt.show()
+
     return centroids_filtered.min()
 
 
