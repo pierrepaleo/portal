@@ -49,7 +49,7 @@ def fista_l1(data, K, Kadj, H, Lambda, Lip=None,  n_it=100, return_energy=True):
         H.norm1()               : [optionnal] L1 norm of the coefficients
 
     Lambda : weight of the regularization (the higher Lambda, the more sparse is the solution in the H domain)
-    Lip : norm of the operator K (sqrt of largest eigenvalue of Kadj*K)
+    Lip : largest eigenvalue of Kadj*K
     n_it : number of iterations
     return_energy: if True, an array containing the values of the objective function will be returned
     '''
@@ -65,7 +65,7 @@ def fista_l1(data, K, Kadj, H, Lambda, Lip=None,  n_it=100, return_energy=True):
 
     if Lip is None:
         print("Warn: fista_l1(): Lipschitz constant not provided, computing it with 20 iterations")
-        Lip = power_method(K, Kadj, data, 20) * 1.2
+        Lip = power_method(K, Kadj, data, 20)**2 * 1.2 # FIXME : why squared ?
         print("Lip = %e" % Lip)
 
     if return_energy: en = np.zeros(n_it)

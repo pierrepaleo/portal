@@ -88,7 +88,7 @@ class WaveletCoeffs():
     v : list of "levels" arrays containing vertical coefficients at various scales
     d : list of "levels" arrays containing details coefficients at various scales
     '''
-    def __init__(self, data, wname=None, levels=None, do_random_shifts=True):
+    def __init__(self, data, wname=None, levels=None, do_random_shifts=False):
         '''
         Initialization of the Wavelet class.
 

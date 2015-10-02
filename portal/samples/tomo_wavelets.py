@@ -32,7 +32,7 @@ def _main():
     sino = K(ph)
     res_fbp = Kadj(sino)
 
-    en, res = portal.algorithms.fista.fista_l1(sino, K, Kadj, H, 2., 2e2,  n_it=351, return_energy=True)
+    en, res = portal.algorithms.fista.fista_l1(sino, K, Kadj, H, Lambda=2., Lip=None,  n_it=351, return_energy=True)
 
     portal.utils.misc.my_imshow((res_fbp, res), (1,2), cmap="gray", nocbar=True)
 

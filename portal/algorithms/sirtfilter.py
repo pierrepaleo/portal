@@ -52,8 +52,38 @@
 from __future__ import division
 import numpy as np
 from portal.operators.tomography import AstraToolbox
+import os
 
 __all__ = ['SirtFilter']
+
+
+def _str_implode(string_list, separator):
+    return separator.join(string_list)
+
+def _ceilpow2(N):
+    p = 1
+    while p < N:
+        p *= 2
+    return p
+
+def _convolve(sino, thefilter):
+    npx = sino.shape[1]
+    sino_f = np.fft.fft(sino, 2*npx + 0*1, axis=1) * thefilter # FIXME : consider nextpow2(npx)*2 for speed
+    return np.fft.ifft(sino_f , axis=1)[:, :npx].real
+
+
+
+def _compute_filter_operator(npix, P, PT, alph, n_it=20, lambda_tikhonov=0):
+        x = np.zeros((npix,npix),dtype=np.float32)
+        print(P(x).shape)
+        x[npix//2,npix//2]=1
+        #~ xs = np.copy(x)
+        xs = np.zeros_like(x)
+        for i in range(n_it):
+            xs += x
+            x -= alph*PT(P(x)) + alph*lambda_tikhonov
+            #~ astra.extrautils.clipCircle(x)
+        return xs
 
 class SirtFilter:
     def __init__(self, n_pixels, angles, n_it, savedir=None):
@@ -74,38 +104,24 @@ class SirtFilter:
             self.n_px = n_pixels[0]
         else: self.n_px = n_pixels
         if not(isinstance(angles, int)):
-            n_a = len(tuple(angles))
-        else: n_a = angles
+            self.n_a = len(tuple(angles))
+        else: self.n_a = angles
 
         self.AST = AstraToolbox(n_pixels, angles)
-        self.nit = n_it
-        self.thefilter = _compute_filter(savedir)
-
-
-
-    def _compute_filter_operator(self, npix, P, PT, alph, n_it=20, lambda_tikhonov=0):
-        x = np.zeros((npix,npix),dtype=np.float32)
-        x[npix//2,npix//2]=1
-        #~ xs = np.copy(x)
-        xs = np.zeros_like(x)
-        for i in range(n_it):
-            xs += x
-            x -= alph*PT(P(x)) + alph*lambda_tikhonov
-            #~ astra.extrautils.clipCircle(x)
-        return xs
-
+        self.n_it = n_it
+        self.thefilter = self._compute_filter(savedir)
 
 
     def _compute_filter(self, savedir=None):
 
         npix = self.n_px
-        nAng = self.n_A
+        nAng = self.n_a
         niter = self.n_it
 
         # Check if filter is already calculated for this geometry
         if savedir is not None:
             if not(os.path.isdir(savedir)): raise Exception('%s no such directory' % savedir)
-            fname = str_implode(['sirt_filter', str(npix), str(nAng), str(niter)], '_') + '.npz'
+            fname = _str_implode(['sirt_filter', str(npix), str(nAng), str(niter)], '_') + '.npz'
             fname = os.path.join(savedir, fname)
             if os.path.isfile(fname):
                 nz_desc = np.load(fname)
@@ -130,9 +146,9 @@ class SirtFilter:
         if npix % 2 == 0: npix += 1
 
         # Initialize ASTRA with this new geometry
-        AST = AstraToolbox(npix, nAng)
-        P = lambda x : self.AST.proj(x) #*3.14159/2.0/nAng
-        PT = lambda y : self.AST.backproj(y, filt=False)
+        AST2 = AstraToolbox(npix, nAng)
+        P = lambda x : AST2.proj(x) #*3.14159/2.0/nAng
+        PT = lambda y : AST2.backproj(y, filt=False)
 
         # Compute the filter with this odd shape
         xs = _compute_filter_operator(npix, P, PT, alph, niter)
@@ -166,12 +182,6 @@ class SirtFilter:
         if savedir is not None:
             np.savez_compressed(fname, data=result, geometry=np.array([nDet, nAng]), iterations=niter)
         return result
-
-    def _convolve(self, sino, thefilter):
-        npx = sino.shape[1]
-        sino_f = np.fft.fft(sino, 2*npx + 0*1, axis=1) * thefilter # FIXME : consider nextpow2(npx)*2 for speed
-        return np.fft.ifft(sino_f , axis=1)[:, :npx].real
-
 
     def reconst(self, sino):
         s = _convolve(sino, self.thefilter)

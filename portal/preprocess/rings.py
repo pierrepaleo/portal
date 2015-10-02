@@ -28,8 +28,11 @@
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
+from __future__ import division
+import numpy as np
 
 __all__ = ['munchetal_filter', 'remove_stripe_ti']
+
 
 # ------------------------------------------------------------------------------
 # --------- Rings artifacts correction : Titarenko's algorithm
@@ -170,6 +173,8 @@ def _ringb(sino, m, n, step):
 # Copyright (c) 2013, Elettra - Sincrotrone Trieste S.C.p.A.
 # All rights reserved.
 # ------------------------------------------------------------------------------
+
+import pywt
 
 # De-stripe : Munch Et Al algorithm
 def munchetal_filter(im, wlevel, sigma, wname='db15'):
