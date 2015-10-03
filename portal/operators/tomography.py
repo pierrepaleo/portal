@@ -35,7 +35,7 @@ from math import sqrt
 from portal.operators.image import norm2sq
 import astra
 
-__all__ = ['AstraToolbox']
+__all__ = ['AstraToolbox', 'clipCircle']
 
 
 
@@ -44,7 +44,7 @@ class AstraToolbox:
         ASTRA toolbox wrapper.
     '''
 
-    def __init__(self, n_pixels, n_angles):
+    def __init__(self, n_pixels, n_angles, rot_center=None):
         '''
         Initialize the ASTRA toolbox with a simple parallel configuration.
         The image is assumed to be square, and the detector count is equal to the number of rows/columns.
@@ -61,6 +61,8 @@ class AstraToolbox:
 
         self.vol_geom = astra.create_vol_geom(n_x, n_y)
         self.proj_geom = astra.create_proj_geom('parallel', 1.0, n_pixels, angles)
+        if rot_center:
+            self.proj_geom['option'] = {'ExtraDetectorOffset': (rot_center - n_x / 2.) * np.ones(n_angles)}
         self.proj_id = astra.create_projector('cuda', self.proj_geom, self.vol_geom)
         #~ self.rec_id = astra.data2d.create('-vol', self.vol_geom)
 
@@ -124,7 +126,8 @@ class AstraToolbox:
         astra.data2d.delete(self.proj_id)
 
 
-
+def clipCircle(x):
+    return astra.extrautils.clipCircle(x)
 
 
 

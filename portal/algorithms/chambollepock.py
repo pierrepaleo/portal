@@ -35,10 +35,10 @@ from portal.operators.misc import power_method
 from portal.operators.image import gradient, div, norm1, norm2sq, proj_l2
 
 
-__all__ = ['chambolle_pock']
+__all__ = ['chambolle_pock_tv']
 
 
-def chambolle_pock(K, Kadj, data, Lambda, L=None,  n_it=100, return_energy=True):
+def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_energy=True):
     '''
     Chambolle-Pock algorithm for Total Variation regularization.
     The following objective function is minimized :

@@ -39,11 +39,22 @@ if __name__ == '__main__':
     do_destripe_sino = 0 # Correct rings artifacts by pre-processing the sinogram
     destripe_algorithm = 1 # 1 = Münch, 2 = Titarenko
     slice_start = 201
-    slice_end =   201
+    slice_end =   210
     sirt_iterations = 300
     folder_out = '/home/paleo/Projets/ID16/A11_osmium_tomo11/rec_portal'
     file_prefix_out = 'rec_'
     # -----
+
+
+
+
+
+
+
+
+
+
+
 
     if not(os.path.isdir(folder)): raise Exception('Not a folder : %s' % folder)
     if not(os.path.isdir(folder_out)): raise Exception('Not a folder : %s' % folder_out)

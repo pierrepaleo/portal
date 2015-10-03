@@ -34,9 +34,9 @@ import numpy as np
 from portal.operators.misc import power_method
 from portal.operators.image import grad_tv_smoothed, tv_smoothed, norm2sq, dot
 
-__all__ = ['conjugate_gradient_TV']
+__all__ = ['conjugate_gradient_tv']
 
-def conjugate_gradient_TV(K, Kadj, data, Lambda, mu=1e-4, n_it=300, return_energy=True):
+def conjugate_gradient_tv(K, Kadj, data, Lambda, mu=1e-4, n_it=300, return_energy=True):
     '''
     Conjugate Gradient algorithm to minimize the objective function
         0.5*||K*x - d||_2^2 + Lambda*TV_mu (x)

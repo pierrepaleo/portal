@@ -51,7 +51,7 @@
 
 from __future__ import division
 import numpy as np
-from portal.operators.tomography import AstraToolbox
+from portal.operators.tomography import AstraToolbox, clipCircle
 import os
 
 __all__ = ['SirtFilter']
@@ -81,12 +81,13 @@ def _compute_filter_operator(npix, P, PT, alph, n_it=20, lambda_tikhonov=0):
         xs = np.zeros_like(x)
         for i in range(n_it):
             xs += x
-            x -= alph*PT(P(x)) + alph*lambda_tikhonov
-            #~ astra.extrautils.clipCircle(x)
+            x -= alph*PT(P(x)) + alph*lambda_tikhonov*x
+            clipCircle(x) # Optional !
         return xs
 
+# TODO : clean the code for attributes vs parameters
 class SirtFilter:
-    def __init__(self, n_pixels, angles, n_it, savedir=None):
+    def __init__(self, n_pixels, angles, n_it, savedir=None, lambda_tikhonov=0, rot_center=None):
         '''
         Initialize the SIRT-Filter class.
 
@@ -107,12 +108,13 @@ class SirtFilter:
             self.n_a = len(tuple(angles))
         else: self.n_a = angles
 
-        self.AST = AstraToolbox(n_pixels, angles)
+        self.AST = AstraToolbox(n_pixels, angles, rot_center=rot_center)
         self.n_it = n_it
-        self.thefilter = self._compute_filter(savedir)
+        self.rot_center = rot_center
+        self.thefilter = self._compute_filter(savedir, lambda_tikhonov)
 
 
-    def _compute_filter(self, savedir=None):
+    def _compute_filter(self, savedir=None, lambda_tikhonov=0):
 
         npix = self.n_px
         nAng = self.n_a
@@ -146,12 +148,12 @@ class SirtFilter:
         if npix % 2 == 0: npix += 1
 
         # Initialize ASTRA with this new geometry
-        AST2 = AstraToolbox(npix, nAng)
+        AST2 = AstraToolbox(npix, nAng)#, rot_center=self.rot_center) # is rot_center required for computing the filter?
         P = lambda x : AST2.proj(x) #*3.14159/2.0/nAng
         PT = lambda y : AST2.backproj(y, filt=False)
 
         # Compute the filter with this odd shape
-        xs = _compute_filter_operator(npix, P, PT, alph, niter)
+        xs = _compute_filter_operator(npix, P, PT, alph, niter, lambda_tikhonov)
 
         # The filtering is done in the sinogram domain, using FFT
         # The filter has to be forward projected, then FT'd

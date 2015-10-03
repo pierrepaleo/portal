@@ -35,8 +35,8 @@ import conjgrad
 import sirtfilter
 '''
 
-from .chambollepock import chambolle_pock
-from .conjgrad import conjugate_gradient_TV
+from .chambollepock import chambolle_pock_tv
+from .conjgrad import conjugate_gradient_tv
 from .sirtfilter import SirtFilter
 from .fista import *
 

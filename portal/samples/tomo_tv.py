@@ -14,25 +14,17 @@ def _main():
     nangles = 80
     AST = portal.operators.tomography.AstraToolbox(npx, nangles)
 
-    # Configure the wavelet regularization
-    wname = "haar"
-    levels = 8
-    do_random_shifts = True
-    Lambda = 0.2
+    # Configure the TV regularization
+    Lambda = 5.0
 
-    # Configure the optimization algorithm (FISTA-L1)
+    # Configure the optimization algorithm (Chambolle-Pock for TV min)
     K = lambda x : AST.proj(x)
     Kadj = lambda x : AST.backproj(x, filt=True)
-    H = lambda x : portal.operators.wavelets.WaveletCoeffs(x, wname=wname, levels=levels, do_random_shifts=do_random_shifts)
-    Hinv = lambda w : w.inverse()
-    soft_thresh = lambda w, beta : portal.operators.wavelets.soft_threshold_coeffs(w, Lambda)
     n_it = 101
 
     # Run the algorithm to reconstruct the sinogram
     sino = K(ph)
-    en, res = portal.algorithms.fista.fista_l1(sino, K, Kadj,
-        Lambda=Lambda, H=H, Hinv=Hinv, soft_thresh=soft_thresh,
-        Lip=None, n_it=n_it, return_energy=True)
+    en, res = portal.algorithms.chambollepock.chambolle_pock_tv(sino, K, Kadj, Lambda, n_it=351, return_energy=True)
 
     # Display the result, compare to FBP
     res_fbp = Kadj(sino)
