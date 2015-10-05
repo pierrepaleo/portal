@@ -73,16 +73,14 @@ def _convolve(sino, thefilter):
 
 
 
-def _compute_filter_operator(npix, P, PT, alph, n_it=20, lambda_tikhonov=0):
+def _compute_filter_operator(npix, P, PT, alph, n_it, lambda_tikhonov=0):
         x = np.zeros((npix,npix),dtype=np.float32)
-        print(P(x).shape)
         x[npix//2,npix//2]=1
-        #~ xs = np.copy(x)
         xs = np.zeros_like(x)
         for i in range(n_it):
             xs += x
             x -= alph*PT(P(x)) + alph*lambda_tikhonov*x
-            clipCircle(x) # Optional !
+            # clipCircle(x) # Optional !
         return xs
 
 # TODO : clean the code for attributes vs parameters
@@ -108,7 +106,7 @@ class SirtFilter:
             self.n_a = len(tuple(angles))
         else: self.n_a = angles
 
-        self.AST = AstraToolbox(n_pixels, angles, rot_center=rot_center)
+        self.AST = AstraToolbox(n_pixels, angles, rot_center=rot_center)#, super_sampling=8)
         self.n_it = n_it
         self.rot_center = rot_center
         self.thefilter = self._compute_filter(savedir, lambda_tikhonov)
@@ -148,7 +146,7 @@ class SirtFilter:
         if npix % 2 == 0: npix += 1
 
         # Initialize ASTRA with this new geometry
-        AST2 = AstraToolbox(npix, nAng)#, rot_center=self.rot_center) # is rot_center required for computing the filter?
+        AST2 = AstraToolbox(npix, nAng, super_sampling=8) # rot center is not required in the computation of the filter
         P = lambda x : AST2.proj(x) #*3.14159/2.0/nAng
         PT = lambda y : AST2.backproj(y, filt=False)
 

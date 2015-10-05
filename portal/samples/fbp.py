@@ -14,12 +14,17 @@ if __name__ == '__main__':
     FBP = lambda x : AST.backproj(x, filt=True)
     P = lambda x : AST.proj(x)
 
+    sino = 40.0*(sino-sino.min())/(sino.max()-sino.min()) # Scale ?
+    print("scaled")
+
     sino = portal.preprocess.sinogram.straighten_sino(sino)
+    sino = portal.preprocess.rings.munchetal_filter(sino, 5, 2.6)
     #~ sino = portal.preprocess.sinogram.center_sino(sino, 1049.4)
+
 
     res = FBP(sino)
 
-    S = portal.algorithms.sirtfilter.SirtFilter(n_px, n_angles, 57, savedir=folder_out, lambda_tikhonov=0.0, rot_center=1049.371362)
+    S = portal.algorithms.sirtfilter.SirtFilter(n_px, n_angles, 502, savedir=folder_out, lambda_tikhonov=10.0, rot_center=1049.371362)
     res_sirt = S.reconst(sino)
     #~ res_sirt = AST.run_algorithm('SIRT_CUDA', 100, sino)
 
@@ -28,5 +33,5 @@ if __name__ == '__main__':
     #~ plt.imshow(FBP(sino))
     #~ plt.show()
 
-    #~ portal.utils.io.call_imagej(res)
-    portal.utils.io.call_imagej([res, res_sirt])
+    portal.utils.io.call_imagej(res_sirt)
+    #~ portal.utils.io.call_imagej([res, res_sirt])

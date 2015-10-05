@@ -44,7 +44,7 @@ class AstraToolbox:
         ASTRA toolbox wrapper.
     '''
 
-    def __init__(self, n_pixels, n_angles, rot_center=None):
+    def __init__(self, n_pixels, n_angles, rot_center=None, super_sampling=None):
         '''
         Initialize the ASTRA toolbox with a simple parallel configuration.
         The image is assumed to be square, and the detector count is equal to the number of rows/columns.
@@ -64,9 +64,40 @@ class AstraToolbox:
         if rot_center:
             self.proj_geom['option'] = {'ExtraDetectorOffset': (rot_center - n_x / 2.) * np.ones(n_angles)}
         self.proj_id = astra.create_projector('cuda', self.proj_geom, self.vol_geom)
-        #~ self.rec_id = astra.data2d.create('-vol', self.vol_geom)
 
-    def backproj(self, sino_data, filt=False, ext=False):
+        # For new projector. Based on wrapper of "sirtfbp"
+        # vg : Volume geometry
+        self.vg = astra.projector.volume_geometry(self.proj_id)
+        # pg : projection geometry
+        self.pg = astra.projector.projection_geometry(self.proj_id)
+
+        # ---- Configure Projector ------
+        # sinogram shape
+        self.sshape = astra.functions.geom_size(self.pg)
+        # resulting sinogram (data and identifier)
+        self.res_sino = np.zeros(self.sshape, dtype=np.float32)
+        self.sid = astra.data2d.link('-sino', self.pg, self.res_sino)
+        # Configure projector
+        self.cfg_proj = astra.creators.astra_dict('FP_CUDA')
+        self.cfg_proj['ProjectionDataId'] = self.sid
+        self.cfg_proj['ProjectorId'] = self.proj_id
+        if super_sampling:
+            self.cfg_proj['option'] = {'DetectorSuperSampling':super_sampling}
+
+        # ---- Configure Backprojector ------
+        # volume shape
+        self.vshape = astra.functions.geom_size(self.vg)
+        # resulting volume (data and identifier)
+        self.res_slice = np.zeros(self.vshape, dtype=np.float32)
+        self.vid = astra.data2d.link('-vol', self.vg, self.res_slice) # TODO : garb. collection here ?
+        # Configure backprojector
+        self.cfg_backproj = astra.creators.astra_dict('BP_CUDA')
+        self.cfg_backproj['ReconstructionDataId'] = self.vid
+        self.cfg_backproj['ProjectorId'] = self.proj_id
+        if super_sampling:
+            self.cfg_backproj['option'] = {'PixelSuperSampling':super_sampling}
+
+    def backproj_old(self, sino_data, filt=False, ext=False):
         if filt is True:
             if ext is True:
                 bid, rec = astra.create_backprojection(self.filter_projections_ext(sino_data), self.proj_id)
@@ -77,10 +108,39 @@ class AstraToolbox:
         astra.data2d.delete(bid)
         return rec
 
-    def proj(self, slice_data):
+    def proj_old(self, slice_data):
         sid, proj_data = astra.create_sino(slice_data, self.proj_id)
         astra.data2d.delete(sid)
         return proj_data
+
+
+    def backproj(self, s, filt=False, ext=False):
+        if filt is True:
+            if ext is True:
+                sino = self.filter_projections_ext(s).astype(np.float32)
+            else:
+                sino = self.filter_projections(s).astype(np.float32)
+        else:
+            sino = s.astype(np.float32)
+
+        sid = astra.data2d.link('-sino', self.pg, sino)
+        self.cfg_backproj['ProjectionDataId'] = sid
+        bp_id = astra.algorithm.create(self.cfg_backproj)
+        astra.algorithm.run(bp_id)
+        astra.algorithm.delete(bp_id)
+        astra.data2d.delete(sid) # self.vid
+        return self.res_slice
+
+
+    def proj(self, v):
+        vid = astra.data2d.link('-vol',self.vg, v)
+        self.cfg_proj['VolumeDataId'] = vid
+        fp_id = astra.algorithm.create(self.cfg_proj)
+        astra.algorithm.run(fp_id)
+        astra.algorithm.delete(fp_id)
+        astra.data2d.delete(vid) # self.sid
+        return self.res_sino
+
 
     def filter_projections(self, proj_set):
         nb_angles, l_x = proj_set.shape
