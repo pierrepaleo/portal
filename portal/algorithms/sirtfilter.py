@@ -81,6 +81,7 @@ def _compute_filter_operator(npix, P, PT, alph, n_it, lambda_tikhonov=0):
             xs += x
             x -= alph*PT(P(x)) + alph*lambda_tikhonov*x
             # clipCircle(x) # Optional !
+            print(i)
         return xs
 
 # TODO : clean the code for attributes vs parameters
@@ -183,9 +184,9 @@ class SirtFilter:
             np.savez_compressed(fname, data=result, geometry=np.array([nDet, nAng]), iterations=niter)
         return result
 
-    def reconst(self, sino):
+    def reconst(self, sino, ext=False):
         s = _convolve(sino, self.thefilter)
-        return self.AST.backproj(s, filt=False)
+        return self.AST.backproj(s, filt=False, ext=ext)
 
 
 

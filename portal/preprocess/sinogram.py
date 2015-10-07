@@ -39,7 +39,7 @@ __all__ = ['center_sino', 'straighten_sino']
 
 
 
-def straighten_sino(sino):
+def straighten_sino(sino, order=3):
     n_angles, n_pix = sino.shape
     x = np.arange(n_pix)
     sino_corr = np.zeros_like(sino)
@@ -51,7 +51,7 @@ def straighten_sino(sino):
         #~ X = np.array([np.ones(n_pix), x, x**2, x**3]).T
         #~ X = X[:, ::-1] # numpy convention
         #~ z0 = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), y)
-        z = np.polyfit(x, y, 3)
+        z = np.polyfit(x, y, order)
         f = np.poly1d(z)
         sino_corr[line, :] = y - f(x)
     return sino_corr

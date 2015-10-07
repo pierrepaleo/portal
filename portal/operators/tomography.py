@@ -37,7 +37,11 @@ import astra
 
 __all__ = ['AstraToolbox', 'clipCircle']
 
-
+def nextpow2(N):
+    p = 1
+    while p < N:
+        p *= 2
+    return p
 
 class AstraToolbox:
     '''
@@ -74,12 +78,8 @@ class AstraToolbox:
         # ---- Configure Projector ------
         # sinogram shape
         self.sshape = astra.functions.geom_size(self.pg)
-        # resulting sinogram (data and identifier)
-        self.res_sino = np.zeros(self.sshape, dtype=np.float32)
-        self.sid = astra.data2d.link('-sino', self.pg, self.res_sino)
         # Configure projector
         self.cfg_proj = astra.creators.astra_dict('FP_CUDA')
-        self.cfg_proj['ProjectionDataId'] = self.sid
         self.cfg_proj['ProjectorId'] = self.proj_id
         if super_sampling:
             self.cfg_proj['option'] = {'DetectorSuperSampling':super_sampling}
@@ -88,14 +88,21 @@ class AstraToolbox:
         # volume shape
         self.vshape = astra.functions.geom_size(self.vg)
         # resulting volume (data and identifier)
-        self.res_slice = np.zeros(self.vshape, dtype=np.float32)
-        self.vid = astra.data2d.link('-vol', self.vg, self.res_slice) # TODO : garb. collection here ?
         # Configure backprojector
         self.cfg_backproj = astra.creators.astra_dict('BP_CUDA')
-        self.cfg_backproj['ReconstructionDataId'] = self.vid
         self.cfg_backproj['ProjectorId'] = self.proj_id
         if super_sampling:
             self.cfg_backproj['option'] = {'PixelSuperSampling':super_sampling}
+
+
+
+    def __checkArray(self, arr):
+        if arr.dtype != np.float32:
+            arr = arr.astype(np.float32)
+        if arr.flags['C_CONTIGUOUS']==False:
+            arr = np.ascontiguousarray(arr)
+        return arr
+
 
     def backproj_old(self, sino_data, filt=False, ext=False):
         if filt is True:
@@ -117,29 +124,45 @@ class AstraToolbox:
     def backproj(self, s, filt=False, ext=False):
         if filt is True:
             if ext is True:
-                sino = self.filter_projections_ext(s).astype(np.float32)
+                sino = self.filter_projections_ext(s)
             else:
-                sino = self.filter_projections(s).astype(np.float32)
+                sino = self.filter_projections(s)
         else:
-            sino = s.astype(np.float32)
+            sino = s
+        sino = self.__checkArray(sino)
 
+        # In
         sid = astra.data2d.link('-sino', self.pg, sino)
         self.cfg_backproj['ProjectionDataId'] = sid
+        # Out
+        v = np.zeros(self.vshape, dtype=np.float32)
+        vid = astra.data2d.link('-vol', self.vg, v)
+        self.cfg_backproj['ReconstructionDataId'] = vid
+
         bp_id = astra.algorithm.create(self.cfg_backproj)
         astra.algorithm.run(bp_id)
         astra.algorithm.delete(bp_id)
-        astra.data2d.delete(sid) # self.vid
-        return self.res_slice
+        astra.data2d.delete([sid, vid])
+        return v
+
 
 
     def proj(self, v):
-        vid = astra.data2d.link('-vol',self.vg, v)
+        v = self.__checkArray(v)
+        # In
+        vid = astra.data2d.link('-vol', self.vg, v)
         self.cfg_proj['VolumeDataId'] = vid
+        # Out
+        s = np.zeros(self.sshape, dtype=np.float32)
+        sid = astra.data2d.link('-sino',self.pg, s)
+        self.cfg_proj['ProjectionDataId'] = sid
+
         fp_id = astra.algorithm.create(self.cfg_proj)
         astra.algorithm.run(fp_id)
         astra.algorithm.delete(fp_id)
-        astra.data2d.delete(vid) # self.sid
-        return self.res_sino
+        astra.data2d.delete([vid, sid])
+        return s
+
 
 
     def filter_projections(self, proj_set):
