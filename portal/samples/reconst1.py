@@ -38,9 +38,9 @@ if __name__ == '__main__':
     do_straighten_sino = 1 # Straighten sinograms to reduce cupping effect
     do_destripe_sino = 0 # Correct rings artifacts by pre-processing the sinogram
     destripe_algorithm = 1 # 1 = Münch, 2 = Titarenko
-    slice_start = 201
-    slice_end =   210
-    sirt_iterations = 300
+    slice_start = 202
+    slice_end =   202
+    sirt_iterations = 5
     folder_out = '/home/paleo/Projets/ID16/A11_osmium_tomo11/rec_portal'
     file_prefix_out = 'rec_'
     # -----
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     #~ PT = lambda y : AST.backproj(y, filt=False)
 
     print("Computing the filter...")
-    S = portal.algorithms.sirtfilter.SirtFilter(npix, nAng, sirt_iterations, folder_out)
+    S = portal.algorithms.sirtfilter.SirtFilter(npix, nAng, sirt_iterations, folder_out, hdf5=True)
     #~ thefilter = compute_filter(npix, nAng, sirt_iterations, savedir=folder_out)
     print("Done")
 

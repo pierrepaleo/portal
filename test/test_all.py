@@ -27,3 +27,20 @@
 #
 
 
+import unittest
+import sys
+from test_operators import test_suite_all_operators
+
+def test_suite_all():
+    testSuite = unittest.TestSuite()
+    testSuite.addTest(test_suite_all_operators())
+    return testSuite
+
+
+
+
+if __name__ == '__main__':
+    mysuite = test_suite_all()
+    runner = unittest.TextTestRunner()
+    if not runner.run(mysuite).wasSuccessful():
+        sys.exit(1)

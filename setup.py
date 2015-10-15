@@ -41,10 +41,13 @@ if __name__ == '__main__':
 
 
     setup(name = "portal",
-          version = "1.0",
+          version = "0.1",
+          platforms = ["linux_x86_64"],
           description = "A set of various tomographic reconstruction algorithms",
           author = "Pierre Paleo",
           author_email = "pierre.paleo@esrf.fr",
+          maintainer = "Pierre Paleo",
+          maintainer_email = "pierre.paleo@esrf.fr",
           url = "https://github.com/pierrepaleo/ChambollePock",
           license="BSD",
           packages=find_packages(),

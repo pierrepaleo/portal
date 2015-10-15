@@ -32,13 +32,14 @@
 from __future__ import division
 import numpy as np
 from portal.operators.misc import power_method
-from portal.operators.image import gradient, div, norm1, norm2sq, proj_l2
+from portal.operators.image import gradient, div, norm1, norm2sq, proj_l2, proj_linf
+from math import sqrt
+
+__all__ = ['chambolle_pock_tv', 'chambolle_pock_l1_tv']
 
 
-__all__ = ['chambolle_pock_tv']
 
-
-def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_energy=True):
+def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_all=True):
     '''
     Chambolle-Pock algorithm for Total Variation regularization.
     The following objective function is minimized :
@@ -49,12 +50,13 @@ def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_energy=Tr
     Lambda : weight of the TV penalization (the higher Lambda, the more sparse is the solution)
     L : norm of the operator [P, Lambda*grad] (see power_method)
     n_it : number of iterations
-    return_energy: if True, an array containing the values of the objective function will be returned
+    return_all: if True, an array containing the values of the objective function will be returned
     '''
 
     if L is None:
         print("Warn: chambolle_pock(): Lipschitz constant not provided, computing it with 20 iterations")
-        L = power_method(K, Kadj, data, 20) * 1.2
+        L = power_method(K, Kadj, data, 20)
+        L = sqrt(8. + L**2) * 1.2
         print("L = %e" % L)
 
     sigma = 1.0/L
@@ -66,27 +68,80 @@ def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_energy=Tr
     x_tilde = 0*x
     theta = 1.0
 
-    if return_energy: en = np.zeros(n_it)
+    if return_all: en = np.zeros(n_it)
     for k in range(0, n_it):
         # Update dual variables
-        p = proj_l2(p + sigma*gradient(x_tilde), Lambda)
+        p = proj_l2(p + sigma*gradient(x_tilde), Lambda) # For isotropic TV, the prox is a projection onto the L2 unit ball. For anisotropic TV, this is a projection onto the L-infinity unit ball.
         q = (q + sigma*K(x_tilde) - sigma*data)/(1.0 + sigma)
         # Update primal variables
         x_old = x
         x = x + tau*div(p) - tau*Kadj(q)
         x_tilde = x + theta*(x - x_old)
         # Calculate norms
-        if return_energy:
+        if return_all:
             fidelity = 0.5*norm2sq(K(x)-data)
             tv = norm1(gradient(x))
             energy = 1.0*fidelity + Lambda*tv
             en[k] = energy
             if (k%10 == 0): # TODO: more flexible
                 print("[%d] : energy %e \t fidelity %e \t TV %e" %(k,energy,fidelity,tv))
-    if return_energy: return en, x
+    if return_all: return en, x
     else: return x
 
 
-#~ del power_method, gradient, div, norm1, norm2sq, division, np
+def chambolle_pock_l1_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_all=True):
+    '''
+    Chambolle-Pock algorithm for L1-TV.
+    The following objective function is minimized :
+        ||K*x - d||_1 + Lambda*TV(x)
+    This method is recommended against L2-TV for noise with strong outliers (eg. salt & pepper).
+
+    K : forward operator
+    Kadj : backward operator
+    Lambda : weight of the TV penalization (the higher Lambda, the more sparse is the solution)
+    L : norm of the operator [P, Lambda*grad] (see power_method)
+    n_it : number of iterations
+    return_all: if True, an array containing the values of the objective function will be returned
+    '''
+
+    if L is None:
+        print("Warn: chambolle_pock(): Lipschitz constant not provided, computing it with 20 iterations")
+        L = power_method(K, Kadj, data, 20)
+        L = sqrt(8. + L**2) * 1.2
+        print("L = %e" % L)
+    sigma = 1.0/L
+    tau = 1.0/L
+
+    x = 0*Kadj(data)
+    p = 0*gradient(x)
+    q = 0*data
+    x_tilde = 0*x
+    theta = 1.0
+
+    if return_all: en = np.zeros(n_it)
+    for k in range(0, n_it):
+        # Update dual variables
+        p = proj_l2(p + sigma*gradient(x_tilde), Lambda)
+        q = proj_linf(q + sigma*K(x_tilde) - sigma*data) # Here the projection onto the l-infinity ball is absolutely required !
+
+        # Update primal variables
+        x_old = x
+        x = x + tau*div(p) - tau*Kadj(q)
+        x_tilde = x + theta*(x - x_old)
+        # Calculate norms
+        if return_all:
+            fidelity = 0.5*norm2sq(K(x)-data)
+            tv = norm1(gradient(x))
+            energy = 1.0*fidelity + Lambda*tv
+            en[k] = energy
+            if (k%10 == 0): # TODO: more flexible
+                print("[%d] : energy %e \t fidelity %e \t TV %e" %(k,energy,fidelity,tv))
+    if return_all: return en, x
+    else: return x
+
+
+
+
+
 
 

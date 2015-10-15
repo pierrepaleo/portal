@@ -31,20 +31,79 @@
 
 from __future__ import division
 import numpy as np
-from scipy.ndimage import filters
+try:
+    from scipy.ndimage import filters
+    __has_ndimage__ = True
+except ImportError:
+    __has_ndimage__ = False
 
 __all__ = ['ConvolutionOperator']
 
+
+
+def convolve_sep_scipy(img, kernel, mode):
+    res = filters.convolve1d(img, kernel, axis= -1, mode=mode)
+    return filters.convolve1d(res, kernel, axis=0, mode=mode)
+
+def convolve2_scipy(img, kernel, mode):
+    return filters.convolve(img, self.kernel, mode)
+
+
+def _fftconv1(im, k):
+    """
+    FFT based convolution with 'reflect' boundary condition, axis 1.
+    This is not optimized at all ; scipy should be used for small kernel sizes
+    """
+    Nr, Nc = im.shape
+    s = (k.shape[0] - 1)/2
+    im2 = np.zeros((Nr, 3*Nc))
+    im2[:, :Nc] = im[:, ::-1]
+    im2[:, Nc:2*Nc] = im
+    im2[:, 2*Nc:] = im[:, ::-1]
+    return np.fft.ifft(np.fft.fft(im2, axis=1) * np.fft.fft(k, 3*Nc), axis=1)[:, Nc+s:2*Nc+s].real
+
+def _fftconv0(im, k):
+    """
+    FFT based convolution with 'reflect' boundary condition, axis 0
+    This is not optimized at all ; scipy should be used for small kernel sizes
+    """
+    Nr, Nc = im.shape
+    s = (k.shape[0] - 1)/2
+    im2 = np.zeros((3*Nr, Nc))
+    im2[:Nr, :] = im[::-1, :]
+    im2[Nr:2*Nr, :] = im
+    im2[2*Nr:, :] = im[::-1, :]
+    return np.fft.ifft(np.fft.fft(im2, axis=0) * np.fft.fft(k, 3*Nr), axis=0)[Nr+s:2*Nr+s, :].real
+
+def convolve_sep_fft(img, kernel, mode):
+    res = _fftconv1(img, kernel)
+    return _fftconv0(res, kernel)
+
+
+
+# TODO : convolution along a given axis
 class ConvolutionOperator:
     def __init__(self, kernel, initfrom=None):
         if initfrom is None:
             self.kernel = kernel
             self.is2D = True if len(kernel.shape) > 1 else False
             self.mode = 'reflect' #{'reflect', 'constant', 'nearest', 'mirror', 'wrap'}
+            self.T = self._transpose()
+            if __has_ndimage__:
+                self.convolve_sep = convolve_sep_scipy
+                self.convolve2 = convolve2_scipy
+            else:
+                self.convolve_sep = convolve_sep_fft
+                self.convolve2 = convolve2_fft
+                if self.mode != 'reflect':
+                    raise NotImplementedError('ConvolutionOperator: please install scipy for using mode %s' % (self.mode))
         else :
             self.kernel = np.copy(initfrom.kernel)
             self.is2D = initfrom.is2D
             self.mode = initfrom.mode
+            self.convolve_sep = initfrom.convolve_sep
+            self.convolve2 = initfrom.convolve2
+
 
 
     def __mul__(self, img):
@@ -53,13 +112,13 @@ class ConvolutionOperator:
         If the kernel is 1D, a separable convolution is done.
         '''
         if self.is2D:
-            return filters.convolve(img, self.kernel, self.mode)
+            return self.convolve2(img, self.kernel, self.mode)
         else:
-            res = filters.convolve1d(img, self.kernel, axis= -1, mode=self.mode)
-            return filters.convolve1d(res, self.kernel, axis=0, mode=self.mode)
+            return self.convolve_sep(img, self.kernel, self.mode)
 
 
-    def T(self):
+
+    def _transpose(self):
         res = ConvolutionOperator(self, initfrom=self)
         res.kern = res.kernel.T
         return res

@@ -32,7 +32,11 @@
     Simplified implementation of https://github.com/dmpelt/pysirtfbp
 
     An iterative method with L2 regularization (SIRT) amounts to the minimization of
+
+    .. math::
+
         f(x) = 0.5* ||P*x - d||_2^2
+
     At each iteration :
         x_{n+1} = x_n - alpha * grad_f (x_n)
                 = x_n - alpha * (PT*(P*x - d))      ; PT is the transpose of P
@@ -53,6 +57,13 @@ from __future__ import division
 import numpy as np
 from portal.operators.tomography import AstraToolbox, clipCircle
 import os
+try:
+    import h5py
+    __has_h5py__ = True
+except ImportError:
+    print("Warning: SirtFilter: h5py not found, filters cannot be saved in HDF5 format")
+    __has_h5py__ = False
+
 
 __all__ = ['SirtFilter']
 
@@ -65,6 +76,35 @@ def _ceilpow2(N):
     while p < N:
         p *= 2
     return p
+
+
+def _open(fname, fmt):
+    if fmt == '.npz':
+        f_desc = np.load(fname)
+        f_data = f_desc['data']
+        f_geom = f_desc['geometry']
+        f_iter = f_desc['iterations']
+    elif fmt == '.h5':
+        f_desc = h5py.File(fname)
+        f_data = f_desc['data'].value
+        f_geom = f_desc['geometry'].value
+        f_iter = f_desc['iterations'].value
+    f_desc.close()
+    return f_data, f_geom, f_iter
+
+def _save(fname, result, nDet, nAng, niter):
+    fmt = os.path.splitext(fname)[-1]
+    if fmt == '.npz':
+        np.savez_compressed(fname, data=result, geometry=np.array([nDet, nAng]), iterations=niter)
+    elif fmt == '.h5':
+        f_desc = h5py.File(fname)
+        f_desc['data'] = result
+        f_desc['geometry'] = np.array([nDet, nAng])
+        f_desc['iterations'] = niter
+        f_desc.close()
+
+
+
 
 def _convolve(sino, thefilter):
     npx = sino.shape[1]
@@ -80,13 +120,13 @@ def _compute_filter_operator(npix, P, PT, alph, n_it, lambda_tikhonov=0):
         for i in range(n_it):
             xs += x
             x -= alph*PT(P(x)) + alph*lambda_tikhonov*x
-            # clipCircle(x) # Optional !
-            print(i)
+            # clipCircle(x) # Not for local tomo !
+            if ((i+1) % 10 == 0): print("Iteration %d / %d" % (i+1, n_it))
         return xs
 
 # TODO : clean the code for attributes vs parameters
 class SirtFilter:
-    def __init__(self, n_pixels, angles, n_it, savedir=None, lambda_tikhonov=0, rot_center=None):
+    def __init__(self, n_pixels, angles, n_it, savedir=None, lambda_tikhonov=0, rot_center=None, hdf5=False):
         '''
         Initialize the SIRT-Filter class.
 
@@ -110,6 +150,7 @@ class SirtFilter:
         self.AST = AstraToolbox(n_pixels, angles, rot_center=rot_center)#, super_sampling=8)
         self.n_it = n_it
         self.rot_center = rot_center
+        self.hdf5 = hdf5
         self.thefilter = self._compute_filter(savedir, lambda_tikhonov)
 
 
@@ -122,23 +163,25 @@ class SirtFilter:
         # Check if filter is already calculated for this geometry
         if savedir is not None:
             if not(os.path.isdir(savedir)): raise Exception('%s no such directory' % savedir)
-            fname = _str_implode(['sirt_filter', str(npix), str(nAng), str(niter)], '_') + '.npz'
+            fmt = '.npz' if not self.hdf5 else '.h5'
+            if not(__has_h5py__) and self.hdf5:
+                print("Warning: SirtFilter: HDF5 format requestred although h5py is not available. Filter will be exported into .npz format.")
+                fmt = '.npz'
+            fname = _str_implode(['sirt_filter', str(npix), str(nAng), str(niter)], '_') + fmt
             fname = os.path.join(savedir, fname)
             if os.path.isfile(fname):
-                nz_desc = np.load(fname)
-                nz_data = nz_desc['data']
-                nz_geom = nz_desc['geometry']
-                nz_iter = nz_desc['iterations']
-                nz_desc.close()
-                if nz_geom[0] != npix or nz_geom[1] != nAng:
+                f_data, f_geom, f_iter = _open(fname, fmt)
+                if f_geom[0] != npix or f_geom[1] != nAng:
                     print('Warning : file %s does not match the required geometry. Re-computing the filter' % fname)
-                elif nz_iter != niter:
+                elif f_iter != niter:
                     print('Warning : file %s does not seem to have the correct number of iterations. Re-computing the filter' % fname)
                 else:
                     print('Loaded %s' % fname)
-                    return nz_data
+                    return f_data
             else:
                 print('Filter %s not found. Computing the filter.' % fname)
+
+
 
         nDet = npix
         alph = 1./(nAng*nDet)
@@ -181,7 +224,7 @@ class SirtFilter:
         result = f_fft.real
 
         if savedir is not None:
-            np.savez_compressed(fname, data=result, geometry=np.array([nDet, nAng]), iterations=niter)
+            _save(fname, result, nDet, nAng, niter)
         return result
 
     def reconst(self, sino, ext=False):

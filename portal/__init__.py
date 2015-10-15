@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Copyright 2015 Pierre Paleo <pierre.paleo@esrf.fr>
-#  License: BSD 2-clause Simplified
+#  License: BSD
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are met:
@@ -14,6 +14,10 @@
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
 #
+#  * Neither the name of ESRF nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 #  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 #  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,43 +27,69 @@
 #  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
 
 
 import os
 import sys
 
-
-def _isImportedFromSourceDirectory():
-    """Returns True if this module is imported from its source directory."""
-
-    # sys.path[0]: script directory or '' for interactive interpreter
-    path = os.path.abspath(sys.path[0])
-    # filePath == __file__ if __file__ is absolute (See os.path.join).
-    filePath = os.path.join(path, __file__)
-    return os.path.commonprefix((path, filePath)) == path
+# Current version -- Major.Minor.Patch (see http://semver.org)
+__version__ = '0.1.0'
 
 
-if _isImportedFromSourceDirectory():
-    raise ImportError('Cannot be imported from source directory.')
 
-'''
-from portal.algorithms.chambollepock import *
-from portal.algorithms.conjgrad import *
-from portal.algorithms.sirtfilter import *
 
-from portal.operators.convolution import *
-from portal.operators.tomography import *
-from portal.operators.image import *
-from portal.operators.misc import *
+#~
+#~ def _isImportedFromSourceDirectory():
+    #~ """Returns True if this module is imported from its source directory."""
+#~
+    #~ # sys.path[0]: script directory or '' for interactive interpreter
+    #~ path = os.path.abspath(sys.path[0])
+    #~ # filePath == __file__ if __file__ is absolute (See os.path.join).
+    #~ filePath = os.path.join(path, __file__)
+    #~ return os.path.commonprefix((path, filePath)) == path
+#~
+#~
+#~ if _isImportedFromSourceDirectory():
+    #~ raise ImportError('Cannot be imported from source directory.')
 
-from portal.preprocess.rings import *
-from portal.preprocess.sinogram import *
 
-from portal.utils.io import *
-from portal.utils.misc import *
-'''
+######################
+
+# Astra for tomographic projection-backprojection
+try:
+    import astra
+    __has_astra__ = True
+except ImportError:
+    print("Warning: ASTRA was not found. Tomographic reconstruction algorithms will not work. ASTRA can be found at https://github.com/astra-toolbox/astra-toolbox")
+    __has_astra__ = False
+
+# pywt for Wavelet utils
+try:
+    import pywt
+    __has_pywt__ = True
+except ImportError:
+    print("Warning: pywt was not found. Wavelets-related algorithms will not work. pywt can be simply installed using pip install pywt  or  sudo apt-get install python-pywt")
+    __has_pywt__ = False
+
+# scipy.ndimage for convolutions in direct space
+try:
+    import scipy.ndimage
+    __has_ndimage__ = True
+except ImportError:
+    print("Warning: scipy.ndimage was not found. Convolutions with small kernels may be slow.")
+    __has_ndimage__ = False
+
+# h5py for exporting sirt-filter
+try:
+    import h5py
+    __has_h5py__ = True
+except ImportError:
+    print("Warning: h5py was not found. SIRT-filters will only be exported into .npz format")
+    __has_h5py__ = False
+
+
+######################
 
 
 from portal import algorithms
@@ -67,22 +97,7 @@ from portal import operators
 from portal import preprocess
 from portal import utils
 
-#~ from portal.algorithms.chambollepock import chambolle_pock
-#~ from portal.algorithms.conjgrad import conjugate_gradient_TV
-#~ from portal.algorithms.sirtfilter import SirtFilter
-
-#~ from portal.operators.convolution import ConvolutionOperator
-#~ from portal.operators.tomography import AstraToolbox
-#~ from portal.operators import image
-#~ from portal.operators import misc
-
-#~ from portal.preprocess import rings
-#~ from portal.preprocess import sinogram
-
-#~ from portal.utils import io
-#~ from portal.utils import misc
 
 
 
-
-del _isImportedFromSourceDirectory  # Clean-up module namespace
+#~ del _isImportedFromSourceDirectory  # Clean-up module namespace

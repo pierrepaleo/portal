@@ -69,7 +69,6 @@ class AstraToolbox:
             self.proj_geom['option'] = {'ExtraDetectorOffset': (rot_center - n_x / 2.) * np.ones(n_angles)}
         self.proj_id = astra.create_projector('cuda', self.proj_geom, self.vol_geom)
 
-        # For new projector. Based on wrapper of "sirtfbp"
         # vg : Volume geometry
         self.vg = astra.projector.volume_geometry(self.proj_id)
         # pg : projection geometry
@@ -87,7 +86,6 @@ class AstraToolbox:
         # ---- Configure Backprojector ------
         # volume shape
         self.vshape = astra.functions.geom_size(self.vg)
-        # resulting volume (data and identifier)
         # Configure backprojector
         self.cfg_backproj = astra.creators.astra_dict('BP_CUDA')
         self.cfg_backproj['ProjectorId'] = self.proj_id

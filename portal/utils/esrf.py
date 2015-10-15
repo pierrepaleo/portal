@@ -75,7 +75,7 @@ def get_tomo_file_num(fname):
     return num_str
 
 
-def apply_processing(myprocessing, dataset, folder_out, file_prefix_out, options=None, extra_args=None):
+def apply_processing(myprocessing, dataset, folder_out, file_prefix_out, options, extra_args=None):
     """
     Apply a processing on a whole dataset. The processing function is defined by the user.
 
@@ -105,29 +105,36 @@ def apply_processing(myprocessing, dataset, folder_out, file_prefix_out, options
     if options and not isinstance(options, dict):
         raise ValueError('apply_processing() : options should be a dictionary')
 
-    # Execution options
+    # Parse the execution options
     # ----------
-    _verbose = False
+    _verbose = True # Verbose is true by default.
     _start = 0
     _number = dataset['number']
     _end = _number -1
-    if options:
-        # Turns into a case insensitive search
-        options = dict((k.lower(), options[k]) for k in options)
-        if options.has_key('verbose') and bool(options['verbose']): _verbose = True
-        if options.has_key('file_start'): tmp_str1 = get_tomo_file_num(options['file_start'])
-        else: tmp_str1 = '0'
-        if options.has_key('file_end'): tmp_str2 = get_tomo_file_num(options['file_end'])
-        else: tmp_str2 = str(_end)
-        try:
-            _start = int(tmp_str1)
-            _end = int(tmp_str2)
-        except ValueError:
-            raise ValueError('apply_processing(): options file_start and file_end should be in format "path_0123.edf"') # TODO
-        if options.has_key('start'): _start = int(options['start'])
-        if options.has_key('end'): _end = int(options['end'])
-        if (_start > _end): raise ValueError('apply_processing(): option start or file_start (%d) is greater than end or file_end (%d)' % (_start, _end))
-        if (_end > _number): raise ValueError('apply_processing(): option end or file_end (%d) is greater than available files (%d)' % (_end, _number))
+
+    # Turns into a case insensitive search
+    options = dict((k.lower(), options[k]) for k in options)
+    if options.has_key('verbose'):
+        _verbose = True if bool(options['verbose']) else False
+    if options.has_key('file_start'): tmp_str1 = get_tomo_file_num(options['file_start'])
+    else: tmp_str1 = '0'
+    if options.has_key('file_end'): tmp_str2 = get_tomo_file_num(options['file_end'])
+    else: tmp_str2 = str(_end)
+    try:
+        _start = int(tmp_str1)
+        _end = int(tmp_str2)
+    except ValueError:
+        raise ValueError('apply_processing(): options file_start and file_end should be in format "path_0123.edf"') # TODO
+    if options.has_key('start'): _start = int(options['start'])
+    if options.has_key('end'): _end = int(options['end'])
+    if (_start > _end): raise ValueError('apply_processing(): option start or file_start (%d) is greater than end or file_end (%d)' % (_start, _end))
+    if (_end > _number): raise ValueError('apply_processing(): option end or file_end (%d) is greater than available files (%d)' % (_end, _number))
+    try:
+        folder_out = options['output_folder']
+        file_prefix_out = options['output_file_prefix']
+    except KeyError:
+        raise Exception('apply_processing(): please provide "output_folder" and "output_file_prefix" in the options')
+
 
 
     # Processing

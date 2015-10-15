@@ -31,6 +31,7 @@
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
+from math import ceil
 
 __all__ = ['gaussian1D', 'generate_coords', 'my_imshow', 'phantom_mask', 'phantom']
 

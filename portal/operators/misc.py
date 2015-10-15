@@ -46,7 +46,7 @@ def power_method(K, Kadj, data, n_it=10):
     Kadj : backward operator (adjoint of K)
     data : initial data
     '''
-    x = Kadj(data)
+    x = np.copy(Kadj(data)) # Copy in case of Kadj = Id
     for k in range(0, n_it):
         x = Kadj(K(x))
         s = sqrt(norm2sq(x))
@@ -55,18 +55,23 @@ def power_method(K, Kadj, data, n_it=10):
 
 
 
-def check_adjoint(K, Kadj, K_input_shape, Kadj_input_shape, tol=1e-7):
+def check_adjoint(K, Kadj, K_input_shape, Kadj_input_shape):
     '''
     Checks if the operators K and Kadj are actually adjoint of eachother, i.e if
         < K(x), y > = < x, Kadj(y) >
     '''
 
-    x = np.random.rand(K_input_shape[0], K_input_shape[1])
-    y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1])
+    if len(K_input_shape) == 2:
+        x = np.random.rand(K_input_shape[0], K_input_shape[1])
+    elif len(K_input_shape) == 3:
+        x = np.random.rand(K_input_shape[0], K_input_shape[1], K_input_shape[2])
+    if len(Kadj_input_shape) == 2:
+        y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1])
+    elif len(Kadj_input_shape) == 3:
+        y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1], Kadj_input_shape[2])
 
     err = abs(dot(K(x), y) - dot(x, Kadj(y)))
-    print(err)
-    return False if err > tol else True
+    return err
 
 
 

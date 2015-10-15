@@ -142,10 +142,10 @@ def grad_tv_smoothed(x, mu):
     return -div(g)
 
 
-def proj_l2(g, Lambda=1.0):
+def proj_l2(g, Lambda=1.0): # FIXME : write a prox for gradient-like arrays, and another for 2D arrays
     '''
     Proximal operator of the L2,1 norm :
-        L2,1(u) = sum_i ||u_i||_2
+        L2,1(u) = sum_i ||u_i||_2   (i.e isotropic TV)
     i.e pointwise projection onto the L2 unit ball
 
     g : gradient-like numpy array
@@ -156,6 +156,21 @@ def proj_l2(g, Lambda=1.0):
     res[0] /= n
     res[1] /= n
     return res
+
+
+
+def proj_linf(x, Lambda=1.):
+    '''
+    Proximal operator of the dual of L1 norm (can be used for anisotropic TV),
+    i.e pointwise projection onto the L-infinity unit ball.
+
+    x : variable
+    Lambda : radius of the L-infinity ball
+    '''
+    return np.minimum(np.abs(x), Lambda) * np.sign(x)
+
+
+
 
 
 

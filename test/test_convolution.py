@@ -28,8 +28,16 @@
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
+import unittest
+from portal.operators.convolution import ConvolutionOperator
+
+class TestConvolutionOperator(unittest.TestCase):
+
+    def test_separable_convolution(self):
+        pass
+        #~ self.assertTrue(diff, 0)
 
 
-import io
-import misc
-import esrf
+
+if __name__ == "__main__":  # True if run as a script
+    unittest.main()
