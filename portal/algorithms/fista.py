@@ -36,7 +36,7 @@ from portal.operators.image import norm2sq
 
 __all__ = ['fista_l1']
 
-def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, return_energy=True):
+def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, return_all=True):
     '''
     Beck-Teboulle's forward-backward algorithm to minimize the objective function
         ||K*x - d||_2^2 + Lambda*||H*x||_1
@@ -50,7 +50,7 @@ def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, re
     soft_thresh : *in-place* function doing the soft thresholding (proximal operator of L1 norm) of the coefficients H(image)
     Lip : largest eigenvalue of Kadj*K
     n_it : number of iterations
-    return_energy: if True, an array containing the values of the objective function will be returned
+    return_all: if True, an array containing the values of the objective function will be returned
     '''
 
     # Check if H, Hinv and soft_thresh are callable
@@ -71,18 +71,18 @@ def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, re
         Lip = power_method(K, Kadj, data, 20)**2 * 1.2 # FIXME : why squared ?
         print("Lip = %e" % Lip)
 
-    if return_energy: en = np.zeros(n_it)
+    if return_all: en = np.zeros(n_it)
     x = np.zeros_like(Kadj(data))
     y = np.zeros_like(x)
     for k in range(0, n_it):
-        grad_y = Kadj(K(x) - data) # FIXME : Kadj(K(y) - data) !!
+        grad_y = Kadj(K(y) - data) # FIXME : Kadj(K(y) - data) !!
         x_old = x
         w = H(y - (1.0/Lip)*grad_y)
         soft_thresh(w, Lambda/Lip)
         x = Hinv(w)
         y = x + ((k-1.0)/(k+10.1))*(x - x_old) # TODO : see what would be the best parameter "a"
         # Calculate norms
-        if return_energy:
+        if return_all:
             fidelity = 0.5*norm2sq(K(x)-data)
             l1 = w.norm1() if can_compute_l1 else 0.
             energy = fidelity + Lambda*l1
@@ -90,5 +90,5 @@ def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, re
             if (k%10 == 0): # TODO: more flexible
                 print("[%d] : energy %e \t fidelity %e \t L1 %e" % (k, energy, fidelity, l1))
         elif (k%10 == 0): print("Iteration %d" % k)
-    if return_energy: return en, x
+    if return_all: return en, x
     else: return x

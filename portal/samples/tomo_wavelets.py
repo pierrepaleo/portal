@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import portal
 
@@ -15,7 +18,7 @@ def _main():
     AST = portal.operators.tomography.AstraToolbox(npx, nangles)
 
     # Configure the wavelet regularization
-    wname = "haar"
+    wname = "db4"
     levels = 8
     do_random_shifts = True
     Lambda = 0.2
@@ -26,13 +29,13 @@ def _main():
     H = lambda x : portal.operators.wavelets.WaveletCoeffs(x, wname=wname, levels=levels, do_random_shifts=do_random_shifts)
     Hinv = lambda w : w.inverse()
     soft_thresh = lambda w, beta : portal.operators.wavelets.soft_threshold_coeffs(w, Lambda)
-    n_it = 101
+    n_it = 201
 
     # Run the algorithm to reconstruct the sinogram
     sino = K(ph)
     en, res = portal.algorithms.fista.fista_l1(sino, K, Kadj,
         Lambda=Lambda, H=H, Hinv=Hinv, soft_thresh=soft_thresh,
-        Lip=None, n_it=n_it, return_energy=True)
+        Lip=None, n_it=n_it, return_all=True)
 
     # Display the result, compare to FBP
     res_fbp = Kadj(sino)

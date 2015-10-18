@@ -1,0 +1,30 @@
+.. math::
+
+    % Math
+    \newcommand{\diff}{\operatorname{d}\!}
+    \newcommand{\setR}{\mathbb{R}}
+    \newcommand{\setN}{\mathbb{N}}
+    \newcommand{\esp}[1]{\mathbb{E}\left[#1\right]}
+    \newcommand{\Space}{$\phantom{grrr}$}
+    \newcommand{\argmin}[1]{\underset{#1}{\operatorname{argmin}} \; }
+    \newcommand{\Argmin}[1]{\underset{#1}{\operatorname{Argmin}} \; }
+    \newcommand{\argmax}[1]{\underset{#1}{\operatorname{argmax}} \; }
+    \let\oldvec\vec
+    \renewcommand{\vec}{\boldsymbol} %boldsymbol or mathbf ?
+    \newcommand{\tv}[1]{\operatorname{TV}\left( #1 \right)}
+    \newcommand{\prox}[2]{\operatorname{prox}_{#1}{\left(#2\right)}}
+    \newcommand{\proj}[2]{\operatorname{Proj}_{#1}{\left(#2\right)}}
+    \newcommand{\sign}[1]{\operatorname{sign}\left( #1 \right)}
+    \newcommand{\braket}[2]{\left\langle #1 \, , \, #2 \right\rangle}
+    \renewcommand{\div}{\operatorname{div}}
+    \newcommand{\id}{\operatorname{Id}}
+    \newcommand{\norm}[1]{\left\| #1 \right\|}
+    \newcommand{\lag}[1]{\mathcal{L}\left( #1 \right)}
+    \newcommand{\mmax}[2]{\max_{#1}\left\{ #2 \right\}}
+    \newcommand{\mmin}[2]{\min_{#1}\left\{ #2 \right\}}
+    \newcommand{\conv}{\ast}
+    \newcommand{\ft}[1]{\mathcal{F}\left( #1 \right)}
+    \newcommand{\ift}[1]{\mathcal{F}^{-1}\left( #1 \right)}
+    \newcommand{\pmat}[1]{\begin{pmatrix} #1 \end{pmatrix}}
+    \newcommand{\E}[1]{\cdot 10^{#1}} %notation scientifique. Utiliser "e", "E", ou "10^" ?
+    \newcommand{\amin}[2]{\underset{#1}{\operatorname{argmin}} \; \left\{ #2 \right\} }

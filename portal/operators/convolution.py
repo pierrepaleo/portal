@@ -84,25 +84,25 @@ def convolve_sep_fft(img, kernel, mode):
 # TODO : convolution along a given axis
 class ConvolutionOperator:
     def __init__(self, kernel, initfrom=None):
-        if initfrom is None:
-            self.kernel = kernel
-            self.is2D = True if len(kernel.shape) > 1 else False
-            self.mode = 'reflect' #{'reflect', 'constant', 'nearest', 'mirror', 'wrap'}
-            self.T = self._transpose()
-            if __has_ndimage__:
-                self.convolve_sep = convolve_sep_scipy
-                self.convolve2 = convolve2_scipy
-            else:
-                self.convolve_sep = convolve_sep_fft
-                self.convolve2 = convolve2_fft
-                if self.mode != 'reflect':
-                    raise NotImplementedError('ConvolutionOperator: please install scipy for using mode %s' % (self.mode))
-        else :
-            self.kernel = np.copy(initfrom.kernel)
-            self.is2D = initfrom.is2D
-            self.mode = initfrom.mode
-            self.convolve_sep = initfrom.convolve_sep
-            self.convolve2 = initfrom.convolve2
+        #~ if initfrom is None:
+        self.kernel = kernel
+        self.is2D = True if len(kernel.shape) > 1 else False
+        self.mode = 'reflect' #{'reflect', 'constant', 'nearest', 'mirror', 'wrap'}
+        if __has_ndimage__:
+            self.convolve_sep = convolve_sep_scipy
+            self.convolve2 = convolve2_scipy
+        else:
+            self.convolve_sep = convolve_sep_fft
+            self.convolve2 = convolve2_fft
+            if self.mode != 'reflect':
+                raise NotImplementedError('ConvolutionOperator: please install scipy for using mode %s' % (self.mode))
+        #~ else :
+            #~ self.kernel = np.copy(initfrom.kernel)
+            #~ self.is2D = initfrom.is2D
+            #~ self.mode = initfrom.mode
+            #~ self.T = initfrom._transpose()
+            #~ self.convolve_sep = initfrom.convolve_sep
+            #~ self.convolve2 = initfrom.convolve2
 
 
 
@@ -118,9 +118,9 @@ class ConvolutionOperator:
 
 
 
-    def _transpose(self):
-        res = ConvolutionOperator(self, initfrom=self)
-        res.kern = res.kernel.T
+    def adjoint(self):
+        res = ConvolutionOperator(self.kernel)
+        res.kernel = res.kernel.T
         return res
 
 

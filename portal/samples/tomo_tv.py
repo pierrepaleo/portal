@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import portal
 
@@ -24,7 +27,7 @@ def _main():
 
     # Run the algorithm to reconstruct the sinogram
     sino = K(ph)
-    en, res = portal.algorithms.chambollepock.chambolle_pock_tv(sino, K, Kadj, Lambda, n_it=351, return_energy=True)
+    en, res = portal.algorithms.chambollepock.chambolle_pock_tv(sino, K, Kadj, Lambda, L=22.5, n_it=301, return_all=True)
 
     # Display the result, compare to FBP
     res_fbp = Kadj(sino)

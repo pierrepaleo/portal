@@ -26,4 +26,13 @@
 #  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import recon_sirt.py
+import tomo_tv.py
+import tomo_wavelets.py
+import zoom.py
+import chambollepock.py
+import apply_processing.py
+
+
+
 

@@ -28,27 +28,39 @@
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
-'''
-    Simplified implementation of https://github.com/dmpelt/pysirtfbp
+r'''
+Simplified implementation of https://github.com/dmpelt/pysirtfbp
 
-    An iterative method with L2 regularization (SIRT) amounts to the minimization of
+An iterative method with L2 regularization (SIRT) amounts to the minimization of
 
-    .. math::
+.. math::
 
-        f(x) = 0.5* ||P*x - d||_2^2
+    f(x) = \frac{1}{2} \left\| P x - d \right\|_2^2
 
-    At each iteration :
-        x_{n+1} = x_n - alpha * grad_f (x_n)
-                = x_n - alpha * (PT*(P*x - d))      ; PT is the transpose of P
-                = (I - alpha*PT*P) x + alpha*PT*d
-    This linear recurrence relation leads to :
-        x_n = A^n * x_0 + alpha * [sum_{k=0}^{n-1} A^k] P^T * d
-        with A = (I - alpha*PT*P)
-    This looks like a "backproject-then-filter" method.
-    The filter [sum_{k=0}^{n-1} A^k] only depends on the geometry of the dataset,
-    so it can be pre-computed for different geometries.
-    Once the filter pre-computed, SIRT is equivalent to a simple Filtered Backprojection.
-    The filtering is done in the sinogram domain.
+At each iteration of a gradient descent :
+
+.. math::
+
+    \begin{aligned}
+    x_{n+1} &= x_n - \alpha  \nabla f (x_n) \\
+            &= x_n - \alpha  (P^T (P x - d)) \\
+            &= (I - \alpha P^T P) x + \alpha P^T d
+    \end{aligned}
+
+This linear recurrence relation leads to :
+
+.. math::
+
+    x_n = A^n  x_0 + \alpha  \left[\sum_{k=0}^{n-1} A^k \right] P^T d
+
+where :math:`A = (I - \alpha P^T P)`.
+
+This looks like a "backproject-then-filter" method.
+The filter :math:`\sum_{k=0}^{n-1} A^k` only depends on the geometry of the dataset,
+so it can be pre-computed for different geometries.
+Once the filter pre-computed, SIRT is equivalent to a simple Filtered Backprojection.
+The filtering is done in the sinogram domain.
+
 
 '''
 
@@ -85,10 +97,11 @@ def _open(fname, fmt):
         f_geom = f_desc['geometry']
         f_iter = f_desc['iterations']
     elif fmt == '.h5':
-        f_desc = h5py.File(fname)
-        f_data = f_desc['data'].value
-        f_geom = f_desc['geometry'].value
-        f_iter = f_desc['iterations'].value
+        f_desc = h5py.File(fname, 'r')
+        d_desc = f_desc['sirtfilter']
+        f_data = d_desc.value
+        f_geom = np.array([d_desc.attrs['npx'], d_desc.attrs['nproj']])
+        f_iter = d_desc.attrs['iterations']
     f_desc.close()
     return f_data, f_geom, f_iter
 
@@ -97,10 +110,11 @@ def _save(fname, result, nDet, nAng, niter):
     if fmt == '.npz':
         np.savez_compressed(fname, data=result, geometry=np.array([nDet, nAng]), iterations=niter)
     elif fmt == '.h5':
-        f_desc = h5py.File(fname)
-        f_desc['data'] = result
-        f_desc['geometry'] = np.array([nDet, nAng])
-        f_desc['iterations'] = niter
+        f_desc = h5py.File(fname, 'w')
+        d_desc = f_desc.create_dataset('sirtfilter', data=result)
+        d_desc.attrs['npx'] = nDet
+        d_desc.attrs['nproj'] = nAng
+        d_desc.attrs['iterations'] = niter
         f_desc.close()
 
 
