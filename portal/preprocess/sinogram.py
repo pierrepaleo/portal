@@ -156,45 +156,6 @@ def calc_center_centroids(sino):
 
 
 
-# ------------------------------------------------------------------------------
-#  Trick to customize the center of rotation in ASTRA.
-#  This should not be necessary in future versions of ASTRA.
-#  Taken from tomopy :
-#
-# Copyright (c) 2015, UChicago Argonne, LLC. All rights reserved.         #
-#                                                                         #
-# Copyright 2015. UChicago Argonne, LLC. This software was produced       #
-# under U.S. Government contract DE-AC02-06CH11357 for Argonne National   #
-# Laboratory (ANL), which is operated by UChicago Argonne, LLC for the    #
-# U.S. Department of Energy. The U.S. Government has rights to use,       #
-# reproduce, and distribute this software.  NEITHER THE GOVERNMENT NOR    #
-# UChicago Argonne, LLC MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR        #
-# ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE.  If software is     #
-# modified to produce derivative works, such modified software should     #
-# be clearly marked, so as not to confuse it with the version available   #
-# from ANL.                                                               #
-# ------------------------------------------------------------------------------
-
-
-def center_sino(sino0, center):
-    sino = np.copy(sino0)
-    _, ndet = sino.shape
-    shft = int(np.round(ndet / 2. - center))
-    sino[:] = np.roll(sino, shft)
-    l = shft
-    r = sino.shape[1] + shft
-    if l < 0:
-        l = 0
-    if r > sino.shape[1]:
-        r = sino.shape[1]
-    sino[:, 0:l] = 0
-    sino[:, r:sino.shape[1]] = 0
-    return sino
-
-
-
-
-
 
 
 
