@@ -31,9 +31,23 @@
 
 from __future__ import division
 import numpy as np
-import scipy.io
-import h5py
-from PyMca.EdfFile import EdfFile
+
+try:
+    import scipy.io
+    __has_scipyio__ = True
+except ImportError:
+    __has_scipyio__ = False
+try:
+    import h5py
+    __has_hdf5__ = True
+except ImportError:
+    __has_hdf5__ = False
+try:
+    from PyMca.EdfFile import EdfFile
+    __has_edf__ = True
+except ImportError:
+    __has_edf__ = False
+
 import subprocess
 import os
 import random
@@ -41,31 +55,39 @@ import string
 
 __all__ = ['edf_read', 'edf_write', 'h5_read', 'h5_write', 'loadmat', 'call_imagej']
 
-def edf_read(fname):
-        '''
-        Read a EDF file and store it into a numpy array
-        '''
-        e = EdfFile(fname)
-        return e.GetData(0)
+if __has_edf__:
 
-def edf_write(data, fname, info={}):
-        '''
-        Save a numpy array into a EDF file
-        '''
-        edfw = EdfFile(fname, access='w+') # Overwrite !
-        edfw.WriteImage(info, data)
+    def edf_read(fname):
+            '''
+            Read a EDF file and store it into a numpy array
+            '''
+            e = EdfFile(fname)
+            return e.GetData(0)
 
+    def edf_write(data, fname, info={}):
+            '''
+            Save a numpy array into a EDF file
+            '''
+            edfw = EdfFile(fname, access='w+') # Overwrite !
+            edfw.WriteImage(info, data)
 
-def h5_read(fname):
-    fid = h5py.File(fname)
-    res = fid[fid.keys()[0]].value
-    fid.close()
-    return res
+else:
+    edf_read = None
+    edf_write = None
 
+if __has_hdf5__:
+    def h5_read(fname):
+        fid = h5py.File(fname)
+        res = fid[fid.keys()[0]].value
+        fid.close()
+        return res
 
-def h5_write(arr, fname):
-    raise NotImplementedError('H5 write is not implemented yet')
+    def h5_write(arr, fname):
+        raise NotImplementedError('H5 write is not implemented yet')
 
+else:
+    h5_read = None
+    h5_write = None
 
 
 def loadmat(fname):

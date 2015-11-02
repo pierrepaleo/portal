@@ -31,6 +31,8 @@
 
 # Init - algorithms
 
+from .. import _utils
+
 '''
 import chambollepock
 import conjgrad
@@ -39,7 +41,8 @@ import sirtfilter
 
 from .chambollepock import chambolle_pock_tv, chambolle_pock_l1_tv
 from .conjgrad import conjugate_gradient_tv
-from .sirtfilter import SirtFilter
+if _utils.__has_astra__:
+    from .sirtfilter import SirtFilter
 from .fista import *
 
 #~ __all__ = ['chambolle_pock', 'conjugate_gradient_TV', 'SirtFilter']
