@@ -42,7 +42,7 @@ Here, the operator :math:`A` is simply the identity. The syntax of ``chambolle_p
     Kadj = Id
     Lambda = 20.
 
-    res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=101, return_All=False)
+    res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=101, return_all=False)
     portal.utils.misc.my_imshow([lb, res], shape=(1,2), cmap="gray")
 
 If the norm :math:`L` of :math:`K = \begin{bmatrix} A ,  \nabla \end{bmatrix}` is not provided, ``chambolle_pock_tv`` automatically computes it.
@@ -81,10 +81,10 @@ This is useful for noise containing strong outliers (eg. salt & pepper noise)
         .. figure:: images/lena_sp_noise.png
             :scale: 50
             :align: center
-            :alt: Lena with gaussian noise
+            :alt: Lena with salt and pepper noise
             :figclass: align-center
 
-            Lena with gaussian noise, 30% of maximum value
+            Lena with salt and pepper noise
 
     .. container:: rightside
 
@@ -123,7 +123,7 @@ PORTAL implements the convolution operator (with any 1D or 2D kernel) and its ad
     lb = A(l)
 
     Lambda = 5e-2
-    res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=501, return_All=False)
+    res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=501, return_all=False)
     portal.utils.misc.my_imshow([lb, res], shape=(1,2), cmap="gray")
 
 (note that here it takes more iterations to converge, and the regularization parameter is much smaller than in the denoising case).
@@ -156,6 +156,75 @@ PORTAL can also help to determine if ``A`` and ``Aadj`` are actually adjoint of 
             :figclass: align-center
 
             Lena deblurred with Chambolle-Pock TV solver
+
+
+
+
+Example : Total Variation tomographic reconstruction
+-----------------------------------------------------
+
+Here, the operator :math:`A` is the forward tomography projector. PORTAL uses the ASTRA toolbox to compute the forward and backward projector.
+For performances issues (the forward and backward projectors are implemented on GPU), the operators :math:`A` and :math:`A^T` are not exactly matched (i.e adjoint of eachother).
+In practice, this is not an issue for the reconstruction.
+
+.. code-block:: python
+
+    import portal
+
+    # Create phantom
+    import scipy.misc
+    l = scipy.misc.lena().astype(np.float32)
+    ph = portal.utils.misc.phantom_mask(l)
+
+    # Create Projector and Backprojector
+    npx = l.shape[0]
+    nangles = 80
+    AST = portal.operators.tomography.AstraToolbox(npx, nangles)
+
+    # Configure the TV regularization
+    Lambda = 5.0
+
+    # Configure the optimization algorithm (Chambolle-Pock for TV min)
+    K = lambda x : AST.proj(x)
+    Kadj = lambda x : AST.backproj(x, filt=True)
+    n_it = 101
+
+    # Run the algorithm to reconstruct the sinogram
+    sino = K(ph)
+    en, res = portal.algorithms.chambollepock.chambolle_pock_tv(sino, K, Kadj, Lambda, L=22.5, n_it=301, return_all=True)
+
+    # Display the result, compare to FBP
+    res_fbp = Kadj(sino)
+    portal.utils.misc.my_imshow((res_fbp, res), (1,2), cmap="gray", nocbar=True)
+
+
+.. container:: twocol
+
+    .. container:: leftside
+
+        .. figure:: images/lena_tomo_fbp.png
+            :scale: 50
+            :align: center
+            :alt: Lena reconstructed with 80 projections, Filtered Backprojection
+            :figclass: align-center
+
+            Lena reconstructed with 80 projections, Filtered Backprojection
+
+    .. container:: rightside
+
+        .. figure:: images/lena_tomo_tv.png
+            :scale: 50
+            :align: center
+            :alt: Lena reconstructed with 80 projections, TV regularization
+            :figclass: align-center
+
+            Lena reconstructed from 80 projections with TV minimization
+
+
+
+
+
+*Note* : the ASTRA toolbox comes with many available geometries ; but in PORTAL only the parallel geometry has been wrapped.
 
 
 
@@ -344,5 +413,5 @@ Eventually, the Chambolle-Pock algorithm for this problem is :
     \end{aligned}
     $$
 
-To conclude, prototyping algorithms in the primal-dual framework is more difficult than for proximal gradient algorithms.
+Prototyping algorithms in the primal-dual framework is more difficult than for proximal gradient algorithms ; but it enables much more flexibility.
 With PORTAL, the user just has to specify the linear operator for a fixed regularization.

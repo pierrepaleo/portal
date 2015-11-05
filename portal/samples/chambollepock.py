@@ -16,59 +16,6 @@ Modify the variable "CASE" to apply each of these cases.
 
 
 
-# The following are working ; they were used to compare against PORTAL
-'''
-
-def proj_linf(x, Lambda):
-    # Anisotropic !
-    return np.minimum(np.abs(x), Lambda) * np.sign(x)
-
-def proj_linf_iso(x, Lambda): # does not depend on the prox step sigma
-    return (Lambda * p)/np.maximum(Lambda, np.abs(p))
-
-def shrink(u, g, tau):
-    # u : dual variable
-    # g : "data"
-    # tau : proximal step
-    return (u - tau * g)/(1. + tau)
-
-def chambolle_pock(data, Lambda, n_it):
-
-    grad = portal.operators.image.gradient
-    div = portal.operators.image.div
-    norm2sq = portal.operators.image.norm2sq
-    norm1 = portal.operators.image.norm1
-
-    x = np.zeros_like(data)
-    y2 = np.zeros_like(grad(data))
-    y1 = np.copy(x)
-    xtilde = np.copy(x)
-
-    L = 3. * 1.2
-    sigma  = tau = 1./L
-    theta = 1.
-
-
-    for k in range(n_it):
-        # y_{n+1} = prox_{sigma F*} y_n + sigma K x_tilde_n
-        y1 = shrink(y1 + sigma* xtilde, data, tau)
-        y2 = proj_linf(y2 + sigma * grad(xtilde), Lambda)
-        # x_{n+1} = prox_{tau G} x_n - tau K* y_{n+1}
-        xold = x
-        x = x -tau * y1 + tau * div(y2)
-        # x_tilde_{n+1} = x_{n+1} + theta (x_{n+1} - x_n)
-        xtilde = x + theta * (x - xold)
-
-        if ((k % 10) == 0):
-            l2 = norm2sq(x - data)
-            tv = norm1(grad(x))
-            en = l2 + Lambda*tv
-            print("[%d] Energy = %e \t L2 = %e \t TV = %e" % (k, en, l2, tv))
-
-    return x
-
-'''
-
 def sp_noise(img, salt=None, pepper=None):
     '''
     Salt & Pepper noise.

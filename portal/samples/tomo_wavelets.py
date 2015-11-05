@@ -23,7 +23,7 @@ def _main():
     do_random_shifts = True
     Lambda = 0.2
 
-    # Configure the optimization algorithm (FISTA-L1)
+    # Configure the optimization algorithm (FISTA-L2-L1)
     K = lambda x : AST.proj(x)
     Kadj = lambda x : AST.backproj(x, filt=True)
     H = lambda x : portal.operators.wavelets.WaveletCoeffs(x, wname=wname, levels=levels, do_random_shifts=do_random_shifts)

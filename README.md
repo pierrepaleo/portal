@@ -49,6 +49,12 @@ python setup.py bdist_wheel
 
 The generated wheel can be installed with the aforementioned instructions.
 
+You can also directly install from the sources with
+
+```bash
+python setup.py install --user
+```
+
 
 ### Dependencies
 

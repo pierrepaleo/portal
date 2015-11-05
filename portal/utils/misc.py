@@ -183,6 +183,33 @@ def fit_fourier(s_comp, c_comp):
 
 
 
+def ceilpow2(N):
+    p = 1
+    while p < N:
+        p *= 2
+    return p
+
+
+def fftbs(x):
+    '''
+    Bluestein chirp-Z transform.
+    Computes a FFT on a "good" length (power of two) to speed-up the FFT, without extending the spectrum.
+    '''
+    N = x.shape[0]
+    n = np.arange(N)
+    b = np.exp((1j*pi*n**2)/N)
+    a = x * b.conjugate()
+    M = ceilpow2(N) * 2
+    #~ A = np.concatenate((a, [0] * (M - N)))
+    B = np.concatenate((b, [0] * (M - 2*N + 1), b[:0:-1]))
+    C = np.fft.ifft(np.fft.fft(a, M) * np.fft.fft(B))
+
+    c = C[:N]
+    return b.conjugate() * c
+
+
+
+
 
 
 

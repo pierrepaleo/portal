@@ -32,6 +32,8 @@ def _main():
     # Display the result, compare to FBP
     res_fbp = Kadj(sino)
     portal.utils.misc.my_imshow((res_fbp, res), (1,2), cmap="gray", nocbar=True)
+    scipy.misc.imsave("lena_tomo_fbp.png", res_fbp)
+    scipy.misc.imsave("lena_tomo_tv.png", res)
 
 
 if __name__ == '__main__':
