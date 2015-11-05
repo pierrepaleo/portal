@@ -56,6 +56,7 @@ __version__ = '0.1.1'
 
 ######################
 
+'''
 # Astra for tomographic projection-backprojection
 try:
     import astra
@@ -87,15 +88,18 @@ try:
 except ImportError:
     print("Warning: h5py was not found. SIRT-filters will only be exported into .npz format")
     __has_h5py__ = False
+'''
 
+
+from ._utils import *
 
 ######################
 
 
-from portal import algorithms
-from portal import operators
-from portal import preprocess
-from portal import utils
+#~ from portal import algorithms
+#~ from portal import operators
+#~ from portal import preprocess
+#~ from portal import utils
 
 
 

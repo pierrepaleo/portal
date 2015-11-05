@@ -31,13 +31,24 @@
 
 # Init - operators
 
-from .. import _utils
+#~ from .. import _utils
+#~
+#~ import convolution
+#~ import image
+#~ if _utils.__has_astra__:
+    #~ import tomography
+#~ if _utils.__has_pywt__:
+    #~ import wavelets
+#~ import misc
+#~
 
-import convolution
-import image
-if _utils.__has_astra__:
-    import tomography
-if _utils.__has_pywt__:
-    import wavelets
-import misc
+
+
+
+
+
+
+
+
+
 

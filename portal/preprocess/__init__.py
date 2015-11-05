@@ -31,5 +31,5 @@
 
 # Init - preprocess
 
-import rings
-import sinogram
+#~ import rings
+#~ import sinogram
