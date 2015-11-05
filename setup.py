@@ -48,7 +48,7 @@ if __name__ == '__main__':
           author_email = "pierre.paleo@esrf.fr",
           maintainer = "Pierre Paleo",
           maintainer_email = "pierre.paleo@esrf.fr",
-          url = "https://github.com/pierrepaleo/ChambollePock",
+          url = "https://github.com/pierrepaleo/portal",
           license="BSD",
           packages=find_packages(),
           #~ packages = ["portal"],
