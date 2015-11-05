@@ -41,7 +41,7 @@ Alternatively, you can build and install this package from the sources.
 git clone git://github.com/pierrepaleo/portal
 ```
 
-To generate a wheel, go in PORTAL root folder :
+* To generate a wheel, go in PORTAL root folder :
 
 ```bash
 python setup.py bdist_wheel
@@ -49,7 +49,7 @@ python setup.py bdist_wheel
 
 The generated wheel can be installed with the aforementioned instructions.
 
-You can also directly install from the sources with
+* You can also directly install from the sources with
 
 ```bash
 python setup.py install --user
