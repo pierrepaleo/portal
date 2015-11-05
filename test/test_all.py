@@ -29,8 +29,9 @@
 
 import unittest
 import sys
-from test_operators import test_suite_all_operators
 from test_basic import test_suite_basic
+from test_operators import test_suite_all_operators
+
 
 def test_suite_all():
     testSuite = unittest.TestSuite()
