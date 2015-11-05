@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  Copyright 2015 Pierre Paleo <pierre.paleo@esrf.fr>
-#  License: BSD 2-clause Simplified
+#  License: BSD
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are met:
@@ -14,6 +14,10 @@
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
 #
+#  * Neither the name of ESRF nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
 #  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 #  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 #  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,26 +27,52 @@
 #  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-#  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
-
+import numpy as np
 import unittest
-import sys
-from test_operators import test_suite_all_operators
-from test_basic import test_suite_basic
 
-def test_suite_all():
+class TestOperators(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_import(self):
+        try:
+            import portal
+            success = 1
+        except ImportError:
+            success = 0
+        self.assertTrue(success == 1, msg="Failed to import portal for some reason")
+
+    def test_version(self):
+        import portal
+        print("Version = %s" % portal.__version__) # TODO : use logger
+
+    def tearDown(self):
+        pass
+
+
+
+
+
+def test_suite_basic():
     testSuite = unittest.TestSuite()
-    testSuite.addTest(test_suite_basic())
-    testSuite.addTest(test_suite_all_operators())
+    testSuite.addTest(TestOperators("test_import"))
+    testSuite.addTest(TestOperators("test_version"))
     return testSuite
 
-
-
-
 if __name__ == '__main__':
-    mysuite = test_suite_all()
+    mysuite = test_suite_basic()
     runner = unittest.TextTestRunner()
-    if not runner.run(mysuite).wasSuccessful():
-        sys.exit(1)
+    runner.run(mysuite)
+
+
+
+
+
+
+
+
+
+
+
