@@ -19,3 +19,4 @@ install:
 # command to run tests
 script:
   - "python test/test_basic.py"
+  - "python test/test_operators.py"

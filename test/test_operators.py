@@ -30,7 +30,8 @@
 
 import numpy as np
 import unittest
-from portal import operators
+#from portal import operators
+import portal.operators as operators
 
 class TestOperators(unittest.TestCase):
 
