@@ -30,37 +30,43 @@
 
 from __future__ import division
 import numpy as np
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    __has_plt__ = True
+except ImportError:
+    __has_plt__ = False
 from math import ceil
 
 __all__ = ['gaussian1D', 'generate_coords', 'my_imshow', 'phantom_mask', 'phantom']
 
-
-def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
-    if isinstance(img_list, np.ndarray):
-        is_array = True
-        plt.figure()
-        plt.imshow(img_list, interpolation="nearest", cmap=cmap)
-        if nocbar is False: plt.colorbar()
-        plt.show()
-
-    elif shape:
-        num = np.prod(shape)
-        #~ if num > 1 and is_array:
-            #~ print('Warning (my_imshow): requestred to show %d images but only one image was provided' %(num))
-        if num != len(img_list):
-            raise Exception('ERROR (my_imshow): requestred to show %d images but %d images were actually provided' %(num , len(img_list)))
-
-        plt.figure()
-        for i in range(0, num):
-            curr = str(shape + (i+1,))
-            curr = curr[1:-1].replace(',','').replace(' ','')
-            if i == 0: ax0 = plt.subplot(curr)
-            else: plt.subplot(curr, sharex=ax0, sharey=ax0)
-            plt.imshow(img_list[i], interpolation="nearest", cmap=cmap)
+if __has_plt__:
+    def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
+        if isinstance(img_list, np.ndarray):
+            is_array = True
+            plt.figure()
+            plt.imshow(img_list, interpolation="nearest", cmap=cmap)
             if nocbar is False: plt.colorbar()
-        plt.show()
+            plt.show()
 
+        elif shape:
+            num = np.prod(shape)
+            #~ if num > 1 and is_array:
+                #~ print('Warning (my_imshow): requestred to show %d images but only one image was provided' %(num))
+            if num != len(img_list):
+                raise Exception('ERROR (my_imshow): requestred to show %d images but %d images were actually provided' %(num , len(img_list)))
+
+            plt.figure()
+            for i in range(0, num):
+                curr = str(shape + (i+1,))
+                curr = curr[1:-1].replace(',','').replace(' ','')
+                if i == 0: ax0 = plt.subplot(curr)
+                else: plt.subplot(curr, sharex=ax0, sharey=ax0)
+                plt.imshow(img_list[i], interpolation="nearest", cmap=cmap)
+                if nocbar is False: plt.colorbar()
+            plt.show()
+else:
+    def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
+        raise ImportError("Please install matplotlib to use this function.")
 
 
 
