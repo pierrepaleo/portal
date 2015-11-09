@@ -38,7 +38,6 @@ from math import sqrt
 __all__ = ['chambolle_pock_tv', 'chambolle_pock_l1_tv']
 
 
-
 def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_all=True):
     '''
     Chambolle-Pock algorithm for Total Variation regularization.

@@ -37,8 +37,6 @@ import sys
 __version__ = '0.1.2'
 
 
-
-
 #~
 #~ def _isImportedFromSourceDirectory():
     #~ """Returns True if this module is imported from its source directory."""
@@ -54,46 +52,10 @@ __version__ = '0.1.2'
     #~ raise ImportError('Cannot be imported from source directory.')
 
 
-######################
-
-'''
-# Astra for tomographic projection-backprojection
-try:
-    import astra
-    __has_astra__ = True
-except ImportError:
-    print("Warning: ASTRA was not found. Tomographic reconstruction algorithms will not work. ASTRA can be found at https://github.com/astra-toolbox/astra-toolbox")
-    __has_astra__ = False
-
-# pywt for Wavelet utils
-try:
-    import pywt
-    __has_pywt__ = True
-except ImportError:
-    print("Warning: pywt was not found. Wavelets-related algorithms will not work. pywt can be simply installed using pip install pywt  or  sudo apt-get install python-pywt")
-    __has_pywt__ = False
-
-# scipy.ndimage for convolutions in direct space
-try:
-    import scipy.ndimage
-    __has_ndimage__ = True
-except ImportError:
-    print("Warning: scipy.ndimage was not found. Convolutions with small kernels may be slow.")
-    __has_ndimage__ = False
-
-# h5py for exporting sirt-filter
-try:
-    import h5py
-    __has_h5py__ = True
-except ImportError:
-    print("Warning: h5py was not found. SIRT-filters will only be exported into .npz format")
-    __has_h5py__ = False
-'''
 
 
 from ._utils import *
 
-######################
 
 
 #~ from portal import algorithms

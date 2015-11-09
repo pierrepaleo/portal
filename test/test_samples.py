@@ -28,26 +28,43 @@
 #  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 #  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
-
-# Init - operators
-
-#~ from .. import _utils
-#~
-#~ import convolution
-#~ import image
-#~ if _utils.__has_astra__:
-    #~ import tomography
-#~ if _utils.__has_pywt__:
-    #~ import wavelets
-#~ import misc
+import unittest
 
 
+class TestSamples(unittest.TestCase):
+    """
+    Test if the samples provided with the package are working.
+    """
+
+    def setUp(self):
+        pass
+
+
+    def test_sample_chambollepock(self):
+        from portal.samples import chambollepock
+        chambollepock._main(1, False)
+        chambollepock._main(2, False)
+        chambollepock._main(3, False)
+
+
+    def tearDown(self):
+        pass
 
 
 
+def test_all_samples():
+    testSuite = unittest.TestSuite()
+    testSuite.addTest(TestSamples("test_sample_chambollepock"))
+    return testSuite
 
 
+def run():
+    mysuite = test_all_samples()
+    runner = unittest.TextTestRunner()
+    runner.run(mysuite)
 
 
+if __name__ == '__main__':
 
+    run()
 

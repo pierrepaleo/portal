@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/pierrepaleo/portal.svg?branch=master)](https://github.com/pierrepaleo/portal/)
+[![Documentation](https://readthedocs.org/projects/portal/badge/?version=latest)](https://github.com/pierrepaleo/portal/)
+
 ## Presentation
 
 

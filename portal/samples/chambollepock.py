@@ -2,7 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import portal
+import sys
+import portal.algorithms
+import portal.operators.convolution
+import portal.utils
+from portal.samples.utils import load_lena, sp_noise
+
 
 """
 In this file, the Chambolle-Pock algorithm is used for a few problems :
@@ -10,43 +15,14 @@ In this file, the Chambolle-Pock algorithm is used for a few problems :
    - TV-L2 deblurring
    - TV-L1 denoising
    - TV-L1 tomographic reconstruction
-
-Modify the variable "CASE" to apply each of these cases.
 """
 
 
 
-def sp_noise(img, salt=None, pepper=None):
-    '''
-    Salt & Pepper noise.
-    @param img : image
-    @param salt : "salt probability"
-    @param pepper : "pepper probability"
-    '''
-    if salt is None: salt = img.shape[0]
-    if pepper is None: pepper = img.shape[0]
-    if salt > 1 or pepper > 1 or salt < 0 or pepper < 0:
-        raise ValueError("Invalid arguments : salt & pepper must be between 0 and 1")
-    salt_bound = np.int(1.0/salt)
-    pepper_bound = np.int(1.0/pepper)
-    salt_mask = np.random.randint(salt_bound+1, size=img.shape)
-    salt_mask = (salt_mask == salt_bound)
-    pepper_mask = np.random.randint(pepper_bound+1, size=img.shape)
-    pepper_mask = (pepper_mask == pepper_bound)
-    res = np.copy(img)
-    res[salt_mask] = res.max()
-    res[pepper_mask] = res.min()
-    return res
+def _main(CASE, DO_RETURN_ALL):
 
-
-
-if __name__ == '__main__':
-
-    import scipy.misc
-    l = scipy.misc.lena().astype('f')
-
-    CASE = 3
-    SAVE = True
+    l = load_lena()
+    SAVE = False
 
 
     if CASE == 1: # Denoising (Gaussian noise)
@@ -60,10 +36,8 @@ if __name__ == '__main__':
         Id = lambda x : x
         K = Id
         Kadj = Id
-        # Test
-        #~ K2 = lambda x : (x, grad(x))
-        #~ Kadj2 = lambda u : u[0]- div(u[1])
-        _, res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, K, Kadj, Lambda, L= 3.5, n_it=151)
+        res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, K, Kadj, Lambda, L= 3.5, n_it=151, return_all=DO_RETURN_ALL)
+        if DO_RETURN_ALL: res = res[1]
         portal.utils.misc.my_imshow([lb, res], shape=(1,2), cmap="gray")
         if SAVE:
             scipy.misc.imsave("lena_gaussian_noise.png", lb)
@@ -79,11 +53,11 @@ if __name__ == '__main__':
         Aadj = lambda x : Blur.adjoint() * x
 
         # Create the blurred image
-        l = scipy.misc.lena().astype('f')
         lb = A(l)
 
         Lambda = 0.03
-        _, res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=801, return_all=True)
+        res  = portal.algorithms.chambollepock.chambolle_pock_tv(lb, A, Aadj, Lambda, n_it=801, return_all=DO_RETURN_ALL)
+        if DO_RETURN_ALL: res = res[1]
         portal.utils.misc.my_imshow([lb, res], shape=(1,2), cmap="gray")
         if SAVE:
             scipy.misc.imsave("lena_gaussian_blur.png", lb)
@@ -98,7 +72,8 @@ if __name__ == '__main__':
         A = Id
         Aadj = Id
 
-        _, res  = portal.algorithms.chambollepock.chambolle_pock_l1_tv(lb, A, Aadj, Lambda, n_it=2001, return_all=True)
+        res  = portal.algorithms.chambollepock.chambolle_pock_l1_tv(lb, A, Aadj, Lambda, n_it=1001, return_all=DO_RETURN_ALL)
+        if DO_RETURN_ALL: res = res[1]
         portal.utils.misc.my_imshow([lb, res], shape=(1,2), cmap="gray")
         if SAVE:
             scipy.misc.imsave("lena_sp_noise.png", lb)
@@ -107,27 +82,35 @@ if __name__ == '__main__':
         # Warning : isotropic TV is zero at the beginning ; this is an entirely non-smooth problem !
 
     if CASE == 4: # tomographic reconstruction with TV-L1
-        sino = portal.utils.io.edf_read('enter/the/path/to/sino.edf')
-        sino = portal.preprocess.sinogram.straighten_sino(sino)
-        tomo = portal.operators.tomography.AstraToolbox(sino.shape[1], sino.shape[0])
+        n_proj = 80
+        tomo = portal.operators.tomography.AstraToolbox(l.shape[0], n_proj)
         A = lambda x : tomo.proj(x)
         Aadj = lambda x : tomo.backproj(x, filt=True)
+        portal.operators.tomography.clipCircle(l)
+        sino = A(l) * 1.5708/n_proj
 
-        Lambda = 10.0#0.7
-        #~ _, res  = portal.algorithms.chambollepock.chambolle_pock_l1_tv(sino, A, Aadj, Lambda, L=5.2e1,  n_it=91, return_all=True)
-        _, res  = portal.algorithms.chambollepock.chambolle_pock_tv(sino, A, Aadj, Lambda, L=5.2e1,  n_it=101, return_all=True)
+        Lambda = 0.1
+        res  = portal.algorithms.chambollepock.chambolle_pock_tv(sino, A, Aadj, Lambda, L=2.5e1, n_it=301, return_all=DO_RETURN_ALL)
+        if DO_RETURN_ALL: res = res[1]
         fbp = Aadj(sino)
         #
         portal.operators.tomography.clipCircle(fbp)
         portal.operators.tomography.clipCircle(res)
         #
-        portal.utils.io.call_imagej([fbp, res])
+        portal.utils.misc.my_imshow([fbp, res], shape=(1,2), cmap="gray")
 
 
 
 
 
+if __name__ == '__main__':
 
+    CASE = int(sys.argv[1]) if len(sys.argv) >= 2 else 1
+    if len(sys.argv) >= 3:
+        DO_RETURN_ALL = bool(int(sys.argv[2]))
+    else: DO_RETURN_ALL = False
+
+    _main(CASE, DO_RETURN_ALL)
 
 
 

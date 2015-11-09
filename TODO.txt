@@ -1,6 +1,10 @@
 TODO-LIST
 =========
 
+
+- Refactor to manually import the submodules
+- Update the doc
+
 - Unit tests
 - More doc
 - De-ringer (integrate Elettra stuff and iterative correction)

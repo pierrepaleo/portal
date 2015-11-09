@@ -29,7 +29,7 @@
 
 import sys
 import unittest
-from .test_all import test_all
+from .test_all import test_suite_all
 
 
 def run_tests():

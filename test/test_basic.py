@@ -53,18 +53,22 @@ class TestOperators(unittest.TestCase):
 
 
 
-
-
 def test_suite_basic():
     testSuite = unittest.TestSuite()
     testSuite.addTest(TestOperators("test_import"))
     testSuite.addTest(TestOperators("test_version"))
     return testSuite
 
-if __name__ == '__main__':
+
+def run():
     mysuite = test_suite_basic()
     runner = unittest.TextTestRunner()
     runner.run(mysuite)
+
+
+if __name__ == '__main__':
+
+    run()
 
 
 
