@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import portal
-
+import portal.algorithms
+import portal.utils
+from portal.samples.utils import load_lena
 
 def _main():
 
     # Create phantom
-    import scipy.misc
-    l = scipy.misc.lena().astype(np.float32)
+    l = load_lena()
     ph = portal.utils.misc.phantom_mask(l)
 
     # Create Projector and Backprojector

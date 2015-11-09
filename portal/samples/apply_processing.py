@@ -7,8 +7,10 @@ The input folder should contain *sinogram* (not radios !) in EDF format.
 """
 
 import numpy as np
-import portal
 import os
+import portal.algorithms
+import portal.operators.tomography
+import portal.utils
 
 def myprocessing(sino, args):
 

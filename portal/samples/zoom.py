@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import portal
+import portal.operators.wavelets
+import portal.algorithms
+from portal.samples.utils import load_lena
+import portal.utils
 
 
 """
@@ -36,8 +39,7 @@ def antibin2(im):
 
 if __name__ == '__main__':
 
-    import scipy.misc
-    l = scipy.misc.lena()
+    l = load_lena()
 
     # 2-zoom
     #~ K = bin2
@@ -47,7 +49,7 @@ if __name__ == '__main__':
     K = lambda x : bin2(bin2(x))
     Kadj = lambda x : antibin2(antibin2(x))
 
-    lb = K(l) # Use lb = l  for "true" digital zooming of lena
+    lb = K(l) # Use lb = l  instead of lb = K(l)  for "true" digital zooming of lena (slower !)
 
     '''
     # TV-zooming
@@ -63,11 +65,12 @@ if __name__ == '__main__':
 
     # Wavelets-zooming
     # Laisser converger un peu pour que le random_shifts se debarasse des artefacts
-    Lambda =1.5 # quite good with db4, L=0.5, 2-bin
+    #Lambda =1.5 # quite good with db4, L=0.5, 2-bin, levels=4
+    Lambda = 15.0
     H = lambda x : portal.operators.wavelets.WaveletCoeffs(x, wname='db4', levels=4, do_random_shifts=True)
     Hinv = lambda w : w.inverse()
     soft_thresh = lambda w, beta : portal.operators.wavelets.soft_threshold_coeffs(w, Lambda)
-    en, res = portal.algorithms.fista.fista_l1(lb, K, Kadj, Lambda, H, Hinv, soft_thresh, n_it=91)
+    en, res = portal.algorithms.fista.fista_l1(lb, K, Kadj, Lambda, H, Hinv, soft_thresh, n_it=41)
 
     portal.utils.misc.my_imshow([res, Kadj(lb)], shape=(1,2), cmap="gray")
 

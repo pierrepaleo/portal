@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import portal
+import portal.operators.tomography
+import portal.algorithms
+import portal.utils
+
 
 """
 In this example, we test the "SIRT-FBP" approach for tomographic reconstruction.

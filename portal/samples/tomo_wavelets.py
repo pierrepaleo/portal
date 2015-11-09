@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import portal
-
+import portal.operators.wavelets
+import portal.algorithms
+from portal.samples.utils import load_lena
+import portal.utils
 
 def _main():
 
     # Create phantom
-    import scipy.misc
-    l = scipy.misc.lena().astype(np.float32)
+    l = load_lena()
     ph = portal.utils.misc.phantom_mask(l)
 
     # Create Projector and Backprojector
