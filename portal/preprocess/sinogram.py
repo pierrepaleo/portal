@@ -30,8 +30,8 @@
 
 import numpy as np
 from portal.utils.misc import generate_coords
-
-__all__ = ['center_sino', 'straighten_sino']
+from portal.algorithms.simplex import _minimize_neldermead
+from math import pi
 
 # ------------------------------------------------------------------------------
 # ------------Cupping reduction : "sinogram straightening" ---------------------
@@ -95,11 +95,11 @@ def calc_center_shifts(sino, smin, smax, sstep=1):
     if sstep < 1: raise NotImplementedError('subpixel precision is not implemented yet...')
     sino_flip = sino[::-1, :]
     n_angles, n_px = sino.shape
-    radius = n_px/2 #small radius => big complement of double-wedge
+    radius = n_px/8. #n_px #small radius => big complement of double-wedge
     s_vec = np.arange(smin, smax+1, sstep)*1.0
     Q_vec = np.zeros_like(s_vec)
     for i,s in enumerate(s_vec):
-        #~ if _VERBOSE: print("[calc_center_shifts] Case %d/%d" % (i+1,s_vec.shape[0]))
+        print("[calc_center_shifts] Case %d/%d" % (i+1,s_vec.shape[0]))
         # Create the artificial 360° sinogram (cropped)
         sino2 = np.zeros((2*n_angles, n_px - abs(s)))
         if s > 0:
@@ -112,58 +112,72 @@ def calc_center_shifts(sino, smin, smax, sstep=1):
             sino2[:n_angles, :] = sino
             sino2[n_angles:, :] = sino_flip
 
+    #figure(); imshow(sino2);
+
         # Create the mask "outside double wedge" (see [1])
         R, C = generate_coords(sino2.shape)
         mask = 1 - (np.abs(R) <= np.abs(C)*radius)
 
         # Take FT of the sinogram and compute the Fourier metric
         sino_f = np.abs(np.fft.fftshift(np.fft.fft2(sino2)))
+
+    #figure(); imshow(np.log(1+sino_f) * mask, interpolation="nearest"); colorbar();
+
         #~ sino_f = np.log(sino_f)
         Q_vec[i] = np.sum(sino_f * mask)/np.sum(mask)
 
     s0 = s_vec[Q_vec.argmin()]
-    return n_px/2 + s0
+    return n_px/2 + s0/2 - 0.5
 
 
 
 
-def calc_center_centroids(sino):
+
+
+def centroid_objective(X, n_angles, centr):
+    """
+    Helper function for get_center()
+    """
+    offs, amp, phi = X
+    t = np.linspace(0, n_angles, n_angles)
+    _sin = offs + amp * np.sin(2*pi*(1./(2*n_angles))*t + phi)
+    return np.sum((_sin - centr)**2)
+
+
+
+
+
+def get_center(sino, debug=False):
     '''
     Determines the center of rotation of a sinogram by computing the center of gravity of each row.
     The array of centers of gravity is fitted to a sine function.
     The axis of symmetry is the estimated center of rotation.
     '''
 
-    n_angles, n_px = sino.shape
-    # Compute the center of gravity for each row
-    i = np.arange(n_px)
-    centroids = np.sum(sino*i, axis=1)/np.sum(sino, axis=1) # sino*i : each row is mult. by "i"
-    # Fit this array to a sine function.
-    # This is done by taking the Fourier Transform and keeping the first two components (mean value and fund. frequency)
-    centroids_f = np.fft.fft(centroids)
-    #~ sigma = 9.0 # blur factor
-    #~ Filter = np.fft.ifftshift(_gaussian_kernel(n_angles, sigma))
-    Filter = np.zeros(n_angles); Filter[0:2] = 1; Filter[-2:] = 1
-    centroids_filtered = np.fft.ifft(centroids_f * Filter).real
+    n_a, n_d = sino.shape
+    # Compute the vector of centroids of the sinogram
+    i = range(n_d)
+    centroids = np.sum(sino*i, axis=1)/np.sum(sino, axis=1)
 
-    #~ import matplotlib.pyplot as plt
-    #~ plt.figure()
-    #~ plt.plot(centroids); plt.plot(centroids_filtered)
-    #~ plt.show()
+    # Fit with a sine function : phase, amplitude, offset.
+    # Uses Nelder-Mead downhill-simplex algorithm
+    cmax, cmin = centroids.max(), centroids.min()
+    offs = (cmax + cmin)/2.
+    amp = (cmax - cmin)/2.
+    phi = 1.1 # !
+    x0 = (offs, amp, phi)
+    sol, _energy, _iterations, _success, _msg = _minimize_neldermead(centroid_objective, x0, args=(n_a, centroids))
 
-    return centroids_filtered.min()
+    offs, amp, phi = sol
 
+    if debug:
+        t = np.linspace(0, n_a, n_a)
+        _sin = offs + amp * np.sin(2*pi*(1./(2*n_a))*t + phi)
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(centroids); plt.plot(_sin)
+        plt.show()
 
-
-
-
-
-
-
-
-
-
-
-
+    return offs
 
 
