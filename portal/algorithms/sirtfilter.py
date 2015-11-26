@@ -181,7 +181,7 @@ class SirtFilter:
             if not(__has_h5py__) and self.hdf5:
                 print("Warning: SirtFilter: HDF5 format requestred although h5py is not available. Filter will be exported into .npz format.")
                 fmt = '.npz'
-            fname = _str_implode(['sirt_filter', str(npix), str(nAng), str(niter)], '_') + fmt
+            fname = _str_implode(['sirtfilter', str(npix), str(nAng), str(niter)], '_') + fmt
             fname = os.path.join(savedir, fname)
             if os.path.isfile(fname):
                 f_data, f_geom, f_iter = _open(fname, fmt)

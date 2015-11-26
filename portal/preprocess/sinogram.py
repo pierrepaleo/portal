@@ -74,8 +74,7 @@ def _gaussian_kernel(ksize, sigma):
     return gaussian
 
 
-# TODO : test on other data
-def calc_center_shifts(sino, smin, smax, sstep=1):
+def get_center_shifts(sino, smin, smax, sstep=1):
     '''
     Determines the center of rotation according to
         Vo NT Et Al, "Reliable method for calculating the center of rotation in parallel-beam tomography", Opt Express, 2014
@@ -85,11 +84,12 @@ def calc_center_shifts(sino, smin, smax, sstep=1):
         - shift this mirrored sinogram and append it to the original one
         - take the Fourier Transform and see what happens in the vertical line (u = 0)
         - repeat for different shifts
+    Please note that this method is quite slow for large sinograms
 
-    sino : sinogram as a numpy array
-    smin: minimum shift of lower sinogram (can be negative)
-    smax: maximum shift of lower sinogram
-    sstep: shift step (can be less than 1 for subpixel precision)
+    @param sino : sinogram as a numpy array
+    @param smin: minimum shift of lower sinogram (can be negative)
+    @param smax: maximum shift of lower sinogram
+    @param sstep: shift step (can be less than 1 for subpixel precision)
     '''
 
     if sstep < 1: raise NotImplementedError('subpixel precision is not implemented yet...')

@@ -44,15 +44,15 @@ def nextpow2(N):
     return p
 
 class AstraToolbox:
-    '''
-        ASTRA toolbox wrapper.
-    '''
+    """
+    ASTRA toolbox wrapper.
+    """
 
     def __init__(self, n_pixels, n_angles, rot_center=None, super_sampling=None):
-        '''
+        """
         Initialize the ASTRA toolbox with a simple parallel configuration.
         The image is assumed to be square, and the detector count is equal to the number of rows/columns.
-        '''
+        """
 
         if isinstance(n_pixels, int):
             n_x, n_y = n_pixels, n_pixels
@@ -66,7 +66,8 @@ class AstraToolbox:
         self.vol_geom = astra.create_vol_geom(n_x, n_y)
         self.proj_geom = astra.create_proj_geom('parallel', 1.0, n_pixels, angles)
         if rot_center:
-            self.proj_geom['option'] = {'ExtraDetectorOffset': (rot_center - n_x / 2.) * np.ones(n_angles)}
+            o_angles = np.ones(n_angles) if isinstance(n_angles, int) else np.ones_like(n_angles)
+            self.proj_geom['option'] = {'ExtraDetectorOffset': (rot_center - n_x / 2.) * o_angles}
         self.proj_id = astra.create_projector('cuda', self.proj_geom, self.vol_geom)
 
         # vg : Volume geometry

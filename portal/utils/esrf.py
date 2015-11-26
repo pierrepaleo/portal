@@ -75,7 +75,7 @@ def get_tomo_file_num(fname):
     return num_str
 
 
-def apply_processing(myprocessing, dataset, folder_out, file_prefix_out, options, extra_args=None):
+def apply_processing(myprocessing, dataset, options, extra_args=None):
     """
     Apply a processing on a whole dataset. The processing function is defined by the user.
 
