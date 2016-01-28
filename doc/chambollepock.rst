@@ -286,7 +286,7 @@ Computing the proximal of :math:`F` or :math:`G` is not straightforward in gener
 When this cannot be done in one step, there are two solutions : re-write the optimization problem (see next section) or split again :math:`F` and :math:`G` like in the aforementioned algorithm.
 
 
-Example : Total Variation deblurring
+Deriving the algorithm for L2-TV
 ------------------------------------
 
 The Total Variation regularized image deblurring can be written
@@ -297,7 +297,7 @@ The Total Variation regularized image deblurring can be written
     \amin{x}{\frac{1}{2}\norm{A x - b}_2^2 + \lambda \norm{\nabla x}_1}
     $$
 
-where :math:`A` is a blur operator (for example a convolution with a Gaussian kernel).
+where :math:`A` is a linear operator.
 An attempt to solve this problem with the Chambolle-Pock algorithm would be to write
 
 .. raw:: html
@@ -315,7 +315,7 @@ However, the proximal operator of :math:`F` is
     $$
 
 so it involves the computation of the inverse of :math:`\id + \tau A^T A`, which is an ill-posed problem.
-This inverse can be computed if :math:`A` is a convolution (since it is diagonalized by the Fourier Transform),
+This inverse can be computed if :math:`A` is a convolution (since it is diagonalized by the Fourier Transform), for example in the deblurring case,
 but this is not the case in general.
 
 We'll consider the case in which :math:`A^T A` is not easily invertible. The optimization problem has to be rewritten. We'll make use of the following equalities :

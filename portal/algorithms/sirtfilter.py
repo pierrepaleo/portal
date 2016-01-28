@@ -138,35 +138,31 @@ def _compute_filter_operator(npix, P, PT, alph, n_it, lambda_tikhonov=0):
             if ((i+1) % 10 == 0): print("Iteration %d / %d" % (i+1, n_it))
         return xs
 
-# TODO : clean the code for attributes vs parameters
+
 class SirtFilter:
-    def __init__(self, n_pixels, angles, n_it, savedir=None, lambda_tikhonov=0, rot_center=None, hdf5=False):
+    def __init__(self, tomo, n_it, savedir=None, lambda_tikhonov=0, hdf5=False):
         '''
         Initialize the SIRT-Filter class.
 
-        n_pixels : number of detector pixels.
-            Can be either an integer (in that case, the slice is square), either a tuple (n_x, n_y).
-        n_angles : projection angles.
-            Can be either an integer (in that case, the angles are even-spaced between 0 and pi), either a numpy array containing custom angles.
-        n_it : number of iterations for the SIRT algorithm.
+        tomo: AstraToolbox instance
+            tomography configuration the SirtFilter will be based on
+        n_it : integer
+            number of iterations for the SIRT algorithm
+        savedir : string
+            Folder where the filter will be stored
+        lambda_tikhonov: float
+            regularization parameter for a Tikhonov (L2-squared) regularization
+        hdf5: bool
+            Use True if you want to store the filter as an HDF5 file (rather than npz)
         '''
 
-        # Initialize ASTRA with the provided geometry
-        # FIXME : only checked for square slices
-        if not(isinstance(n_pixels, int)):
-            if n_pixels[0] != n_pixels[1]: raise Exception('SirtFilter only works with square slices')
-            self.n_px = n_pixels[0]
-        else: self.n_px = n_pixels
-        if not(isinstance(angles, int)):
-            self.n_a = len(tuple(angles))
-        else: self.n_a = angles
-
-        self.AST = AstraToolbox(n_pixels, angles, rot_center=rot_center)#, super_sampling=8)
+        self.AST = tomo
+        self.n_px = tomo.n_pixels
+        self.n_a = tomo.angles.shape[0]
         self.n_it = n_it
-        self.rot_center = rot_center
+        self.rot_center = tomo.rot_center
         self.hdf5 = hdf5
         self.thefilter = self._compute_filter(savedir, lambda_tikhonov)
-
 
     def _compute_filter(self, savedir=None, lambda_tikhonov=0):
 

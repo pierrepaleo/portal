@@ -32,6 +32,9 @@
 from __future__ import division
 import numpy as np
 
+
+
+
 try:
     import scipy.io
     __has_scipyio__ = True
@@ -46,12 +49,12 @@ try:
     from PyMca.EdfFile import EdfFile
     __has_edf__ = True
 except ImportError:
-    __has_edf__ = False
+    try:
+        from PyMca5.PyMca.EdfFile import EdfFile
+        __has_edf__ = True
+    except ImportError:
+        __has_edf__ = False
 
-import subprocess
-import os
-import random
-import string
 
 __all__ = ['edf_read', 'edf_write', 'h5_read', 'h5_write', 'loadmat', 'call_imagej']
 
@@ -98,47 +101,4 @@ def loadmat(fname):
     return res
 
 
-def _imagej_open(fname):
-    # One file
-    if isinstance(fname, str):
-        cmd = ['imagej', fname]
-    # Multiple files
-    if isinstance(fname, list):
-        cmd = ['imagej'] + fname
-    FNULL = open(os.devnull, 'w')
-    process = subprocess.Popen(cmd, stdout=FNULL, stderr=FNULL)
-    FNULL.close();
-    process.wait()
-    return process.returncode
-
-
-# TODO: rewrite this ugly code
-def call_imagej(obj):
-    # Open file(s)
-    if isinstance(obj, str) or (isinstance(obj, list) and isinstance(obj[0], str)):
-        return _imagej_open(obj)
-    # Open numpy array(s)
-    elif isinstance(obj, np.ndarray) or (isinstance(obj, list) and isinstance(obj[0], np.ndarray)):
-        if isinstance(obj, np.ndarray):
-            data = obj
-            fname = '/tmp/' + _randomword(10) + '.edf'
-            edfw = EdfFile(fname, access='w+') # overwrite ...
-            edfw.WriteImage({}, data)
-            return _imagej_open(fname)
-        else:
-            fname_list = []
-            for i, data in enumerate(obj):
-                fname = '/tmp/' + _randomword(10) + str("_%d.edf" % i)
-                fname_list.append(fname)
-                edfw = EdfFile(fname, access='w+') # overwrite ...
-                edfw.WriteImage({}, data)
-            return _imagej_open(fname_list)
-
-    else:
-        raise ValueError('Please enter a file name or a numpy array')
-
-
-def _randomword(length):
-    # http://stackoverflow.com/questions/2030053/random-strings-in-python
-   return ''.join(random.choice(string.lowercase) for i in range(length))
 

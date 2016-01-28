@@ -49,10 +49,26 @@ except ImportError:
     __has_ndimage__ = False
 
 try:
+    import scipy.special
+    __has_special__ = True
+except ImportError:
+    __has_special__ = False
+
+try:
     import h5py
     __has_h5py__ = True
 except ImportError:
     __has_h5py__ = False
+
+
+
+
+
+
+
+
+
+
 
 
 

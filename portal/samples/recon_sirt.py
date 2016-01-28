@@ -28,7 +28,7 @@ if __name__ == '__main__':
     pht_p = tomo.proj(pht)
 
     # Build the SIRT-FBP filter with 200 iterations
-    S = portal.algorithms.sirtfilter.SirtFilter(npx, na, 200)#, savedir='./')
+    S = portal.algorithms.sirtfilter.SirtFilter(tomo, 200)#, savedir='./')
 
     # Apply this filter to the projected phantom, compare to FBP
     portal.utils.misc.my_imshow([tomo.backproj(pht_p, filt=True), S.reconst(pht_p)], shape=(1,2), cmap="gray")

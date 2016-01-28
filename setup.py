@@ -32,7 +32,6 @@ import os
 #~ import sys
 #~ import glob
 
-
 if __name__ == '__main__':
 
 
@@ -48,7 +47,7 @@ if __name__ == '__main__':
             'portal.samples': 'portal/samples'}
 
     setup(name = "portal",
-        version = "0.2",
+        version = "0.4",
         platforms = ["linux_x86", "linux_x86_64"],
         description = "A set of various tomographic reconstruction algorithms",
         author = "Pierre Paleo",

@@ -2,14 +2,20 @@ TODO-LIST
 =========
 
 
-- Refactor to manually import the submodules
-- Update the doc
 
+- SirtFilter : improve the save/load mechanism and include the rotation center
+- (?) sinogram consistency conditions
+- sinogram CoR with correlation
+- Better structure for utils/io
+- io : hdf5 multiframe
+- io : tifffile ?
+- Better import/soft dependencies handling
+- (?) algorithm : res, en rather than en, res
+- better integration of FFT
+- Wavelets easier to use, especially for FISTA-L1
+- De-ringer : iterative correction
+- Speed-up Wavelet transform (library)
+- More docstring !
 - Unit tests
 - More doc
-- De-ringer (integrate Elettra stuff and iterative correction)
-- Iterative method for local tomo
-- Speed-up Wavelet transform => library or PyCuda 
-- SirtFilter taking directly a tomo operator instance as a parameter ?
-- Wavelets easier to use, especially for FISTA-L1
-- More docstring !
+- Example of denoising with Anscombe transform

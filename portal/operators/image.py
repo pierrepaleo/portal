@@ -32,8 +32,7 @@
 
 from __future__ import division
 import numpy as np
-
-__all__ = ['gradient', 'div', 'gradient_axis', 'div_axis', 'tv_smoothed', 'grad_tv_smoothed', 'proj_l2', 'norm2sq', 'norm1', 'dot', 'entropy', 'KL']
+from .. import _utils
 
 
 def gradient(img):
@@ -106,6 +105,7 @@ def div_axis(x, axis=-1):
         t2[1:, :] = x[:-1, :]
     return t1 + t2
 
+
 def psi(x, mu):
     '''
     Huber function needed to compute tv_smoothed
@@ -125,6 +125,7 @@ def tv_smoothed(x, mu):
     g = gradient(x)
     g = np.sqrt(g[0]**2 + g[1]**2)
     return np.sum(psi(g, mu))
+
 
 def grad_tv_smoothed(x, mu):
     '''
@@ -171,19 +172,21 @@ def proj_linf(x, Lambda=1.):
 
 
 
-
+# ------------------------------------------------------------------------------
+# ------------------------------ Norms -----------------------------------------
+# ------------------------------------------------------------------------------
 
 
 def norm2sq(mat):
     return np.dot(mat.ravel(), mat.ravel())
 
+
 def norm1(mat):
     return np.sum(np.abs(mat))
 
+
 def dot(mat1, mat2):
     return np.dot(mat1.ravel(), mat2.ravel())
-
-
 
 
 def entropy(img):
@@ -195,6 +198,7 @@ def entropy(img):
     h /= 1.0*img.size
     h[h == 0] = 1.0
     return -np.sum(h*np.log(h))
+
 
 def KL(img1, img2):
     '''
@@ -209,3 +213,35 @@ def KL(img1, img2):
     x_n, y_n = 1.0 * x_n[m], 1.0 * y_n[m]
     Sx, Sy = x.sum()*1.0, y.sum()*1.0
     return (1.0/Sx) * np.sum(x_n * np.log(x_n/y_n * Sy/Sx))
+
+
+# ------------------------------------------------------------------------------
+# ------------------------- Transforms -----------------------------------------
+# ------------------------------------------------------------------------------
+
+def anscombe(x):
+    """
+    Anscombe transform, a variance stabilizing function.
+    Maps a Poisson-distributed data to a Gaussian-distributed data
+    """
+    return 2*np.sqrt(x + 3.0/8)
+
+
+def ianscombe(y):
+    """
+    Inverse of the Anscombe transform
+    """
+    return (y**2)/4. + sqrt(3/2.)/4./y - 11./8/(y**2) + 5/8.*sqrt(3./2)/(y**3) -1/8.
+
+
+
+
+
+
+
+
+
+
+
+
+

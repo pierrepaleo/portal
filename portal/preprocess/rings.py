@@ -32,8 +32,6 @@ from __future__ import division
 import numpy as np
 from .. import _utils
 
-__all__ = ['munchetal_filter', 'remove_stripe_ti']
-
 
 # ------------------------------------------------------------------------------
 # --------- Rings artifacts correction : Titarenko's algorithm

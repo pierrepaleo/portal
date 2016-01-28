@@ -30,6 +30,9 @@
 
 from __future__ import division
 import numpy as np
+import random
+import string
+
 try:
     import matplotlib.pyplot as plt
     __has_plt__ = True
@@ -37,44 +40,20 @@ except ImportError:
     __has_plt__ = False
 from math import ceil
 
-__all__ = ['gaussian1D', 'generate_coords', 'my_imshow', 'phantom_mask', 'phantom']
-
-if __has_plt__:
-    def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
-        if isinstance(img_list, np.ndarray):
-            is_array = True
-            plt.figure()
-            plt.imshow(img_list, interpolation="nearest", cmap=cmap)
-            if nocbar is False: plt.colorbar()
-            plt.show()
-
-        elif shape:
-            num = np.prod(shape)
-            #~ if num > 1 and is_array:
-                #~ print('Warning (my_imshow): requestred to show %d images but only one image was provided' %(num))
-            if num != len(img_list):
-                raise Exception('ERROR (my_imshow): requestred to show %d images but %d images were actually provided' %(num , len(img_list)))
-
-            plt.figure()
-            for i in range(0, num):
-                curr = str(shape + (i+1,))
-                curr = curr[1:-1].replace(',','').replace(' ','')
-                if i == 0: ax0 = plt.subplot(curr)
-                else: plt.subplot(curr, sharex=ax0, sharey=ax0)
-                plt.imshow(img_list[i], interpolation="nearest", cmap=cmap)
-                if nocbar is False: plt.colorbar()
-            plt.show()
-else:
-    def my_imshow(img_list, shape=None, cmap=None, nocbar=False):
-        raise ImportError("Please install matplotlib to use this function.")
+# For ImageJ :
+import subprocess
+import os
+try:
+    from PyMca.EdfFile import EdfFile
+    __has_edf__ = True
+except ImportError:
+    try:
+        from PyMca5.PyMca.EdfFile import EdfFile
+        __has_edf__ = True
+    except ImportError:
+        __has_edf__ = False
 
 
-
-#~ def generate_coords(img,center=None):
-    #~ if center is None: center = img.shape[0]/2, img.shape[1]/2
-    #~ R, C = np.mgrid[0:img.shape[0],0:img.shape[1]]
-    #~ R -= center[0]; C -= center[1]
-    #~ return R, C
 
 def generate_coords(img_shp, center=None):
     """
@@ -89,6 +68,82 @@ def generate_coords(img_shp, center=None):
     R += 0.5 - center0
     C += 0.5 - center1
     return R, C
+
+
+def my_imshow(img_list, shape=None, cmap=None, nocbar=False, share=True, legend=None):
+    if not(__has_plt__): raise ImportError("Please install matplotlib to use this function.")
+
+    if isinstance(img_list, np.ndarray):
+        is_array = True
+        plt.figure()
+        plt.imshow(img_list, interpolation="nearest", cmap=cmap)
+        if nocbar is False: plt.colorbar()
+        if legend: plt.xlabel(legend)
+        plt.show()
+
+    elif shape:
+        num = np.prod(shape)
+        if num != len(img_list):
+            raise Exception('ERROR (my_imshow): requestred to show %d images but %d images were actually provided' %(num , len(img_list)))
+
+        plt.figure()
+        for i in range(0, num):
+            curr = str(shape + (i+1,))
+            curr = curr[1:-1].replace(',','').replace(' ','')
+            if i == 0: ax0 = plt.subplot(curr)
+            else:
+                if share: plt.subplot(curr, sharex=ax0, sharey=ax0)
+                else: plt.subplot(curr)
+            plt.imshow(img_list[i], interpolation="nearest", cmap=cmap)
+            if legend: plt.xlabel(legend[i])
+            if nocbar is False: plt.colorbar()
+        plt.show()
+
+
+
+def _imagej_open(fname):
+    # One file
+    if isinstance(fname, str):
+        cmd = ['imagej', fname]
+    # Multiple files
+    if isinstance(fname, list):
+        cmd = ['imagej'] + fname
+    FNULL = open(os.devnull, 'w')
+    process = subprocess.Popen(cmd, stdout=FNULL, stderr=FNULL)
+    FNULL.close();
+    process.wait()
+    return process.returncode
+
+
+def call_imagej(obj):
+    # Open file(s)
+    if isinstance(obj, str) or (isinstance(obj, list) and isinstance(obj[0], str)):
+        return _imagej_open(obj)
+    # Open numpy array(s)
+    elif isinstance(obj, np.ndarray) or (isinstance(obj, list) and isinstance(obj[0], np.ndarray)):
+        if isinstance(obj, np.ndarray):
+            data = obj
+            fname = '/tmp/' + _randomword(10) + '.edf'
+            edfw = EdfFile(fname, access='w+') # overwrite ...
+            edfw.WriteImage({}, data)
+            return _imagej_open(fname)
+        else:
+            fname_list = []
+            for i, data in enumerate(obj):
+                fname = '/tmp/' + _randomword(10) + str("_%d.edf" % i)
+                fname_list.append(fname)
+                edfw = EdfFile(fname, access='w+') # overwrite ...
+                edfw.WriteImage({}, data)
+            return _imagej_open(fname_list)
+
+    else:
+        raise ValueError('Please enter a file name or a numpy array')
+
+
+def _randomword(length):
+   return ''.join(random.choice(string.lowercase) for i in range(length))
+
+
 
 
 
@@ -153,27 +208,13 @@ def from_gradient_comp_to_image(gr, boundary=None, axis=1, renorm=False):
         return np.cumsum(res, axis=1)
 
 
-def _generate_center_coordinates(l_x):
-    """
-    Compute the coordinates of pixels centers for an image of
-    linear size l_x
-    """
-    l_x = float(l_x)
-    X, Y = np.mgrid[:l_x, :l_x]
-    center = l_x / 2.
-    X += 0.5 - center
-    Y += 0.5 - center
-    return X, Y
-
-
-
 def fit_fourier(s_comp, c_comp):
 
     Nr, Nc = s_comp.shape
     S = np.fft.fftshift(np.fft.fft2(s_comp))
     C = np.fft.fftshift(np.fft.fft2(c_comp))
     #~ kr, kc = portal.utils.misc.generate_coords(s_comp)
-    kr, kc = _generate_center_coordinates(Nr)
+    kr, kc = generate_coords((Nr, Nr))
     renorm = 1.0/(kr**2 + kc**2)
 
     renorm[np.isinf(renorm)] = 1.0 # /!\
@@ -212,16 +253,6 @@ def fftbs(x):
 
     c = C[:N]
     return b.conjugate() * c
-
-
-
-
-
-
-
-
-
-
 
 
 

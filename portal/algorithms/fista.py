@@ -32,11 +32,9 @@
 from __future__ import division
 import numpy as np
 from portal.operators.misc import power_method
-from portal.operators.image import norm2sq
+from portal.operators.image import norm2sq, norm1
 
-__all__ = ['fista_l1']
-
-def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, return_all=True):
+def fista_l1_operator(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, return_all=True):
     '''
     Beck-Teboulle's forward-backward algorithm to minimize the objective function
         ||K*x - d||_2^2 + Lambda*||H*x||_1
@@ -68,14 +66,14 @@ def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, re
 
     if Lip is None:
         print("Warn: fista_l1(): Lipschitz constant not provided, computing it with 20 iterations")
-        Lip = power_method(K, Kadj, data, 20)**2 * 1.2 # FIXME : why squared ?
+        Lip = power_method(K, Kadj, data, 20)**2 * 1.2
         print("Lip = %e" % Lip)
 
     if return_all: en = np.zeros(n_it)
     x = np.zeros_like(Kadj(data))
     y = np.zeros_like(x)
     for k in range(0, n_it):
-        grad_y = Kadj(K(y) - data) # FIXME : Kadj(K(y) - data) !!
+        grad_y = Kadj(K(y) - data)
         x_old = x
         w = H(y - (1.0/Lip)*grad_y)
         soft_thresh(w, Lambda/Lip)
@@ -92,3 +90,62 @@ def fista_l1(data, K, Kadj, Lambda, H, Hinv, soft_thresh, Lip=None, n_it=100, re
         elif (k%10 == 0): print("Iteration %d" % k)
     if return_all: return en, x
     else: return x
+
+
+
+
+
+
+def _soft_thresh(x, beta):
+    return np.maximum(np.abs(x)-beta, 0)*np.sign(x)
+
+
+
+
+def fista_l1(data, K, Kadj, Lambda, Lip=None, n_it=100, return_all=True):
+    '''
+    Beck-Teboulle's forward-backward algorithm to minimize the objective function
+        ||K*x - d||_2^2 + Lambda*||x||_1
+    When K is a linear operators.
+
+    K : forward operator
+    Kadj : backward operator
+    Lambda : weight of the regularization (the higher Lambda, the more sparse is the solution in the H domain)
+    Lip : largest eigenvalue of Kadj*K
+    n_it : number of iterations
+    return_all: if True, an array containing the values of the objective function will be returned
+    '''
+
+    if Lip is None:
+        print("Warn: fista_l1(): Lipschitz constant not provided, computing it with 20 iterations")
+        Lip = power_method(K, Kadj, data, 20)**2 * 1.2
+        print("Lip = %e" % Lip)
+
+    if return_all: en = np.zeros(n_it)
+    x = np.zeros_like(Kadj(data))
+    y = np.zeros_like(x)
+    for k in range(0, n_it):
+        grad_y = Kadj(K(y) - data)
+        x_old = x
+        w = y - (1.0/Lip)*grad_y
+        w = _soft_thresh(w, Lambda/Lip)
+        x = w
+        y = x + ((k-1.0)/(k+10.1))*(x - x_old) # TODO : see what would be the best parameter "a"
+        # Calculate norms
+        if return_all:
+            fidelity = 0.5*norm2sq(K(x)-data)
+            l1 = norm1(w)
+            energy = fidelity + Lambda*l1
+            en[k] = energy
+            if (k%10 == 0): # TODO: more flexible
+                print("[%d] : energy %e \t fidelity %e \t L1 %e" % (k, energy, fidelity, l1))
+        elif (k%10 == 0): print("Iteration %d" % k)
+    if return_all: return en, x
+    else: return x
+
+
+
+
+
+
+

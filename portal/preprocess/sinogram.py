@@ -32,6 +32,7 @@ import numpy as np
 from portal.utils.misc import generate_coords
 from portal.algorithms.simplex import _minimize_neldermead
 from math import pi
+from portal.operators.fft import Fft
 
 # ------------------------------------------------------------------------------
 # ------------Cupping reduction : "sinogram straightening" ---------------------
@@ -119,7 +120,9 @@ def get_center_shifts(sino, smin, smax, sstep=1):
         mask = 1 - (np.abs(R) <= np.abs(C)*radius)
 
         # Take FT of the sinogram and compute the Fourier metric
-        sino_f = np.abs(np.fft.fftshift(np.fft.fft2(sino2)))
+        fft = Fft(sino2, force_complex=True)
+        sino2_f = fft.fft(sino2)
+        sino_f = np.abs(np.fft.fftshift(sino2_f))
 
     #figure(); imshow(np.log(1+sino_f) * mask, interpolation="nearest"); colorbar();
 
@@ -179,5 +182,83 @@ def get_center(sino, debug=False):
         plt.show()
 
     return offs
+
+
+# ------------------------------------------------------------------------------
+# ------------ Determine the center of rotation --------------------------------
+# ------------------------------------------------------------------------------
+
+
+
+def consistency(sino, order=0):
+    """
+    Measure the "sinogram consistency" by checking the Helgason-Ludwig (HL) condition :
+
+    .. math::
+
+        \int_0^\pi \int_{-\infty}^\infty s^n e^{j k \theta} p(\theta, s) \diff s d \theta \; = \, 0
+
+    for k > n >= 0 and k - n even.
+
+    order: integer
+        Order of the HL condition
+    """
+    raise NotImplementedError("Not implemented yet")
+
+
+
+
+
+# ------------------------------------------------------------------------------
+# --------------------------------- Denoising ----------------------------------
+# ------------------------------------------------------------------------------
+
+def denoise_sg(sino, ftype=None, npts=7):
+    """
+    Sinogram denoising with Savitzky-Golay filtering.
+
+    sino: numpy.ndarray
+        input sinogram
+    ftype: string
+        "cubic" or "quintic"
+    order: integer
+        number of points, can be 5, 7, 9 for cubic and 7, 9 for quintic
+    """
+    c5 = np.array([-3., 12, 17, 12, -3])/35.
+    c7 = np.array([-2., 3, 6, 7, 6, 3, -2])/21.
+    c9 = np.array([-21., 14, 39, 54, 59, 54, 39, 14, -21])/231.
+    q7 = np.array([5., -30, 75, 131, 75, -30, 5])/231.
+    q9 = np.array([15., -55, 30, 135, 179, 135, 30, -55, 15])/429.
+
+    if ftype is None: ftype = "cubic"
+    if ftype == "cubic":
+        if order == 5: c = c5
+        elif order == 7: c = c7
+        elif order == 9: c = c9
+        else: raise NotImplementedError()
+    elif ftype == "quintic":
+        if order == 7: c = q7
+        elif order == 9: c = q9
+        else: raise NotImplementedError()
+    else: raise ValueError("denoise_sg(): unknown filtering type %s" % ftype)
+
+    res = np.zeros_like(sino)
+    # TODO : improve with a "axis=1 convolution"
+    for i in range(sino.shape[0]):
+        res[i] = np.convolve(sino[i], c, mode="same")
+    return res
+
+    # For general case :
+    #~ x = np.arange(npts//2, npts//2, npts)
+    #~ XT = np.vstack((x**0, x**1, x**2, x**3)) # and so on, for degree
+    #~ sol = np.linalg.inv(XT.dot(XT.T)).dot(XT)
+    #~ c0 = sol[0, :] # smoothing
+    #~ c1 = sol[1, :] # first derivative
+
+
+
+
+
+
 
 
