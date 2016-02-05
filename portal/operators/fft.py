@@ -185,8 +185,8 @@ class Fft():
                 raise ValueError("ifft(): provided array has shape %s when plan was created for shape %s" % (str(arr.shape), str(self.outarray.shape)))
             if arr.dtype != self.otype:
                 raise ValueError("ifft(): provided array has type %s when plan was created for type %s" % (str(arr.dtype), str(self.outarray.dtype)))
-            #~ if (id(arr) != id(self.outarray)):
-            self.plan_i.update_arrays(arr, self.inarray)
+            new_output = np.copy(arr) # !!
+            self.plan_i.update_arrays(new_output, self.inarray)
             self.plan_i.execute()
             res = self.plan_i.get_output_array()
             # unlike pyfftw.builders/numpy.fft, the result has to be normalized !

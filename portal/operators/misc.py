@@ -61,20 +61,8 @@ def check_adjoint(K, Kadj, K_input_shape, Kadj_input_shape):
         < K(x), y > = < x, Kadj(y) >
     '''
 
-    if len(K_input_shape) == 1:
-        x = np.random.rand(K_input_shape[0])
-    elif len(K_input_shape) == 2:
-        x = np.random.rand(K_input_shape[0], K_input_shape[1])
-    elif len(K_input_shape) == 3:
-        x = np.random.rand(K_input_shape[0], K_input_shape[1], K_input_shape[2])
-
-    if len(Kadj_input_shape) == 1:
-        y = np.random.rand(Kadj_input_shape[0])
-    elif len(Kadj_input_shape) == 2:
-        y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1])
-    elif len(Kadj_input_shape) == 3:
-        y = np.random.rand(Kadj_input_shape[0], Kadj_input_shape[1], Kadj_input_shape[2])
-
+    x = np.random.rand(*K_input_shape)
+    y = np.random.rand(*Kadj_input_shape)
     err = abs(dot(K(x), y) - dot(x, Kadj(y)))
     return err
 
