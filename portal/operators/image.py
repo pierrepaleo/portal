@@ -65,10 +65,36 @@ def div(grad):
     return res
 
 
+def gradient1d(x):
+    t1 = np.empty_like(x)
+    t2 = np.empty_like(x)
+    t1[:-1] = x[1:]
+    t1[-1] = 0
+    t2[:-1] = x[:-1]
+    t2[-1] = 0
+    return t1-t2
+
+
+def div1d(x):
+    t1 = np.empty_like(x)
+    t2 = np.empty_like(x)
+    t1[:-1] = -x[:-1]
+    t1[-1] = 0
+    t2[0] = 0
+    t2[1:] = x[:-1]
+    return t1 + t2
+
+
+
+
+
+
 def gradient_axis(x, axis=-1):
     '''
     Compute the gradient (keeping dimensions) along one dimension only.
     By default, the axis is -1 (diff along columns).
+
+    TODO : rollaxis
     '''
     t1 = np.empty_like(x)
     t2 = np.empty_like(x)
@@ -157,6 +183,22 @@ def proj_l2(g, Lambda=1.0): # FIXME : write a prox for gradient-like arrays, and
     res[0] /= n
     res[1] /= n
     return res
+
+
+def proj_l2_img(img, Lambda=1.0):
+    '''
+    Proximal operator of the L2,1 norm :
+        L2,1(u) = sum_i ||u_i||_2   (i.e isotropic TV)
+    i.e pointwise projection onto the L2 unit ball
+
+    g : 2D numpy array
+    Lambda : magnitude of the unit ball
+    '''
+    res = np.copy(img)
+    n = np.maximum(np.abs(img)/Lambda, 1.0)
+    res /= n
+    return res
+
 
 
 

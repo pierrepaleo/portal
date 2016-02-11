@@ -6,6 +6,7 @@ import portal.algorithms
 import portal.utils
 from portal.samples.utils import load_lena
 
+
 def _main():
 
     # Create phantom

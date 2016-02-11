@@ -69,8 +69,11 @@ def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_all=True)
 
     if return_all: en = np.zeros(n_it)
     for k in range(0, n_it):
+        import matplotlib.pyplot as plt
         # Update dual variables
-        p = proj_l2(p + sigma*gradient(x_tilde), Lambda) # For isotropic TV, the prox is a projection onto the L2 unit ball. For anisotropic TV, this is a projection onto the L-infinity unit ball.
+        # For anisotropic TV, the prox is a projection onto the L2 unit ball.
+        # For anisotropic TV, this is a projection onto the L-infinity unit ball.
+        p = proj_linf(p + sigma*gradient(x_tilde), Lambda)
         q = (q + sigma*K(x_tilde) - sigma*data)/(1.0 + sigma)
         # Update primal variables
         x_old = x

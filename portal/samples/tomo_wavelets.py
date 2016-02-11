@@ -34,7 +34,7 @@ def _main():
 
     # Run the algorithm to reconstruct the sinogram
     sino = K(ph)
-    en, res = portal.algorithms.fista.fista_l1(sino, K, Kadj,
+    en, res = portal.algorithms.fista.fista_l1_operator(sino, K, Kadj,
         Lambda=Lambda, H=H, Hinv=Hinv, soft_thresh=soft_thresh,
         Lip=None, n_it=n_it, return_all=True)
 
