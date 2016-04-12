@@ -69,7 +69,6 @@ def chambolle_pock_tv(data, K, Kadj, Lambda, L=None,  n_it=100, return_all=True)
 
     if return_all: en = np.zeros(n_it)
     for k in range(0, n_it):
-        import matplotlib.pyplot as plt
         # Update dual variables
         # For anisotropic TV, the prox is a projection onto the L2 unit ball.
         # For anisotropic TV, this is a projection onto the L-infinity unit ball.

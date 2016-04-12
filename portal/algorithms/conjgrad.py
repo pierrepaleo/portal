@@ -31,15 +31,13 @@
 
 from __future__ import division
 import numpy as np
-from portal.operators.misc import power_method
 from portal.operators.image import grad_tv_smoothed, tv_smoothed, norm2sq, dot
 
-__all__ = ['conjugate_gradient_tv']
-
-def conjugate_gradient_tv(K, Kadj, data, Lambda, mu=1e-4, n_it=300, return_energy=True):
+def conjugate_gradient_tv(K, Kadj, data, Lambda, n_it, mu=1e-4, return_energy=True):
     '''
     Conjugate Gradient algorithm to minimize the objective function
         0.5*||K*x - d||_2^2 + Lambda*TV_mu (x)
+    where TV_mu is the Moreau-Yosida regularization of the Total Variation.
 
     K : forward operator
     Kadj : backward operator, adjoint of K
@@ -64,7 +62,7 @@ def conjugate_gradient_tv(K, Kadj, data, Lambda, mu=1e-4, n_it=300, return_energ
         alpha = dot(d, -grad_F_old)/dot(d, ATAd)
         # Update variables
         x = x + alpha*d
-        grad_f = grad_f_old + alpha*ATAd
+        grad_f = grad_f_old + alpha*ATAd # TODO: re-compute gradient every K iterations to avoid error accumulation
         grad_F = grad_f + Lambda*grad_tv_smoothed(x,mu)
         beta = dot(grad_F, grad_F - grad_F_old)/norm2sq(grad_F_old) # Polak-Ribiere
         if beta < 0:
@@ -85,3 +83,61 @@ def conjugate_gradient_tv(K, Kadj, data, Lambda, mu=1e-4, n_it=300, return_energ
             break;
     if return_energy: return en, x
     else: return x
+
+
+
+
+
+
+
+def conjugate_gradient(K, Kadj, data, n_it, return_energy=True):
+    '''
+    Conjugate Gradient algorithm for least squares fitting :
+        0.5*||K*x - d||_2^2
+
+    K : forward operator
+    Kadj : backward operator, adjoint of K
+    data: acquired data
+    n_it : number of iterations
+    '''
+
+    x = 0*Kadj(data) # start from 0
+    grad_f = -Kadj(data)
+    d = -np.copy(grad_f)
+
+    if return_energy: en = np.zeros(n_it)
+
+    for k in range(0, n_it):
+        grad_f_old = grad_f
+        ATAd = Kadj(K(d))
+        # Calculate step size
+        alpha = dot(d, -grad_f_old)/dot(d, ATAd)
+        # Update variables
+        x = x + alpha*d
+        grad_f = grad_f_old + alpha*ATAd # TODO: re-compute gradient every K iterations to avoid error accumulation
+        beta = dot(grad_f, grad_f - grad_f_old)/norm2sq(grad_f_old) # Polak-Ribiere
+        if beta < 0:
+            beta = 0
+        d = -grad_f + beta*d
+        # Energy
+        if return_energy:
+            eng = norm2sq(K(x)-data)
+            en[k] = eng
+            if (k % 10 == 0): # TODO: more flexible
+                print("%d : Energy = %e" %(k, eng))
+
+        # Stoping criterion
+        if np.abs(alpha) < 1e-15: # TODO : try other bounds
+            print("Warning : minimum step reached, interrupting at iteration %d" %k)
+            break;
+    if return_energy: return en, x
+    else: return x
+
+
+
+
+
+
+
+
+

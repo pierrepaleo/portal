@@ -32,6 +32,7 @@
 
 from __future__ import division
 import numpy as np
+from math import sqrt
 from .. import _utils
 
 
@@ -168,6 +169,19 @@ def grad_tv_smoothed(x, mu):
     g[1][m2] /= mu
     return -div(g)
 
+"""
+# Faster alternative
+def grad_tv_smoothed(x, mu):
+    '''
+    Gradient of Moreau-Yosida approximation of Total Variation
+    '''
+    g = gradient(x)
+    m = np.maximum(mu, np.sqrt(g[0]**2 + g[1]**2))
+    #~ if (m2.sum() > 30): print(m2.sum()) # Debug
+    g /= m
+    return -div(g)
+"""
+
 
 def proj_l2(g, Lambda=1.0): # FIXME : write a prox for gradient-like arrays, and another for 2D arrays
     '''
@@ -274,16 +288,4 @@ def ianscombe(y):
     Inverse of the Anscombe transform
     """
     return (y**2)/4. + sqrt(3/2.)/4./y - 11./8/(y**2) + 5/8.*sqrt(3./2)/(y**3) -1/8.
-
-
-
-
-
-
-
-
-
-
-
-
 

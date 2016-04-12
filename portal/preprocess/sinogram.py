@@ -213,7 +213,7 @@ def consistency(sino, order=0):
 # --------------------------------- Denoising ----------------------------------
 # ------------------------------------------------------------------------------
 
-def denoise_sg(sino, ftype=None, npts=7):
+def denoise_sg(sino, ftype=None, order=5):
     """
     Sinogram denoising with Savitzky-Golay filtering.
 

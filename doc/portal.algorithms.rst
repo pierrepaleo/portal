@@ -28,6 +28,14 @@ portal.algorithms.fista module
     :undoc-members:
     :show-inheritance:
 
+portal.algorithms.simplex module
+--------------------------------
+
+.. automodule:: portal.algorithms.simplex
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 portal.algorithms.sirtfilter module
 -----------------------------------
 

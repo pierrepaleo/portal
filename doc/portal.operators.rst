@@ -12,6 +12,14 @@ portal.operators.convolution module
     :undoc-members:
     :show-inheritance:
 
+portal.operators.fft module
+---------------------------
+
+.. automodule:: portal.operators.fft
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 portal.operators.image module
 -----------------------------
 

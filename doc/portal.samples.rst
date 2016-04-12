@@ -12,18 +12,18 @@ portal.samples.apply_processing module
     :undoc-members:
     :show-inheritance:
 
-portal.samples.denoise module
------------------------------
+portal.samples.chambollepock module
+-----------------------------------
 
-.. automodule:: portal.samples.denoise
+.. automodule:: portal.samples.chambollepock
     :members:
     :undoc-members:
     :show-inheritance:
 
-portal.samples.fbp module
--------------------------
+portal.samples.iterative_rings module
+-------------------------------------
 
-.. automodule:: portal.samples.fbp
+.. automodule:: portal.samples.iterative_rings
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,22 +32,6 @@ portal.samples.recon_sirt module
 --------------------------------
 
 .. automodule:: portal.samples.recon_sirt
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-portal.samples.reconst1 module
-------------------------------
-
-.. automodule:: portal.samples.reconst1
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-portal.samples.reconst2 module
-------------------------------
-
-.. automodule:: portal.samples.reconst2
     :members:
     :undoc-members:
     :show-inheritance:
@@ -64,6 +48,14 @@ portal.samples.tomo_wavelets module
 -----------------------------------
 
 .. automodule:: portal.samples.tomo_wavelets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+portal.samples.utils module
+---------------------------
+
+.. automodule:: portal.samples.utils
     :members:
     :undoc-members:
     :show-inheritance:

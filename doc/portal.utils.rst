@@ -4,6 +4,14 @@ portal.utils package
 Submodules
 ----------
 
+portal.utils.bench module
+-------------------------
+
+.. automodule:: portal.utils.bench
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 portal.utils.esrf module
 ------------------------
 

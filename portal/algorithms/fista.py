@@ -139,13 +139,70 @@ def fista_l1(data, K, Kadj, Lambda, Lip=None, n_it=100, return_all=True):
             en[k] = energy
             if (k%10 == 0): # TODO: more flexible
                 print("[%d] : energy %e \t fidelity %e \t L1 %e" % (k, energy, fidelity, l1))
-        elif (k%10 == 0): print("Iteration %d" % k)
+        #~ elif (k%10 == 0): print("Iteration %d" % k)
     if return_all: return en, x
     else: return x
 
 
 
+def fista_wavelets(data, W, K, Kadj, Lambda, Lip=None, n_it=100, return_all=True, normalize=False):
+    """
+    Algorithm for solving the regularized inverse problem
+        ||K x - data||_2^2  +  Lambda*||W x||_1
+    Where K is some forward operator, and W is a Wavelet transform.
+    FISTA is used to solve this algorithm provided that the Wavelet transform is semi-orthogonal:
+        W^T W = alpha* Id
+    which is the case for DWT/SWT with orthogonal filters.
 
+    Parameters
+    ----------
+    data: numpy.ndarray
+        data to reconstruct from
+    W: Wavelets instance
+        Wavelet instance (from pypwt import Wavelets; W = Wavelets(img, "wname", levels, ...)
+    K: function
+        Operator of the  forward model
+    Kadj: function
+        Adjoint operator of K. We should have ||Kadj K x||_2^2 = < x | Kadj K x >
+    Lambda: float
+        Regularization parameter.
+    Lip: float (Optional, default is None)
+        Largest eigenvalue of (Kadj K). If None, it is automatically computed.
+    n_it: integer
+        Number of iterations
+    return_all: bool
+        If True, two arrays are returned: the objective function and the result.
+    normalize: bool (Optional, default is False)
+        If True, the thresholding is normalized (the threshold is smaller for the coefficients in finer scales).
+        Mind that the threshold should be adapted (should be ~ twice bigger than for normalize=False).
+    """
+    if Lip is None:
+        print("Warn: Lipschitz constant not provided, computing it with 20 iterations")
+        Lip = power_method(K, Kadj, data, 20)**2 * 1.2
+        print("Lip = %e" % Lip)
+
+    if return_all: en = np.zeros(n_it)
+    x = np.zeros_like(Kadj(data))
+    y = np.zeros_like(x)
+    for k in range(0, n_it):
+        grad_y = Kadj(K(y) - data)
+        x_old = x
+        W.set_image((y - (1.0/Lip)*grad_y).astype(np.float32))
+        W.forward()
+        W.soft_threshold(Lambda/Lip, normalize=normalize)
+        W.inverse()
+        x = W.image
+        y = x + ((k-1.0)/(k+10.1))*(x - x_old) # TODO : see what would be the best parameter "a"
+        # Calculate norms
+        if return_all:
+            fidelity = 0.5*norm2sq(K(x)-data)
+            l1 = W.norm1()
+            energy = fidelity + Lambda*l1
+            en[k] = energy
+            if (k%10 == 0): # TODO: more flexible
+                print("[%d] : energy %e \t fidelity %e \t L1 %e" % (k, energy, fidelity, l1))
+    if return_all: return en, x
+    else: return x
 
 
 
